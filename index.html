@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Crénolia — Réservations</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--blue:#0066CC;--blue-dk:#0052A3;--blue-lt:#EBF4FB;--blue-brd:#D5E8F7;--txt:#1A2E45;--muted:#7A97B5;--bg:#F3F7FC;--wh:#fff;--brd:#C8DDF0;--red:#C0392B;--red-lt:#FEF5F5}
+html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var(--bg);color:var(--txt)}
+#hdr{background:var(--wh);border-bottom:2px solid var(--blue-brd);padding:10px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20;gap:8px;flex-wrap:wrap}
+#hdr img{height:38px;width:auto}
+#nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.nb{padding:7px 16px;border-radius:20px;border:1.5px solid var(--blue-brd);cursor:pointer;font-weight:500;font-size:13px;background:transparent;color:#666;font-family:inherit}
+.nb.on{background:var(--blue-lt);color:var(--blue-dk);border:none}
+.btn-new{padding:8px 18px;border-radius:20px;border:none;cursor:pointer;font-weight:600;font-size:13px;background:var(--blue);color:var(--wh);font-family:inherit}
+#sp{display:flex;align-items:center;gap:5px;font-size:12px;padding:4px 12px;border-radius:20px;cursor:pointer;border:1.5px solid var(--blue-brd);font-family:inherit;transition:all .3s}
+#sp.ok{background:#EBF7E3;color:#2C6E12;border-color:#A8D5A2}
+#sp.syncing{background:#FFF5E6;color:#7A4800;border-color:#FFD699}
+#sp.err{background:var(--red-lt);color:var(--red);border-color:#F5C6C2}
+#sp.off{background:var(--bg);color:var(--muted);border-color:var(--blue-brd)}
+.sdot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinning{animation:spin .8s linear infinite}
+#main{max-width:860px;margin:0 auto;padding:28px 16px}
+.card{background:var(--wh);border-radius:12px;border:1.5px solid var(--blue-brd);padding:16px 20px;margin-bottom:10px;display:flex;gap:16px;align-items:flex-start}
+.card.subc{border-color:#F0C080;background:#FFFDF7}
+.cn{font-size:17px;font-weight:700;color:#0E3460;margin-bottom:4px}
+.cm{font-size:13px;color:var(--muted);margin-bottom:10px}
+.ct{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.cd{font-size:12px;color:#99B0C8}
+.ca{display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.tag{padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block}
+.tb{background:var(--blue-lt);color:var(--blue-dk)}.tg{background:#EBF7E3;color:#2C6E12}.to{background:#FFF5E6;color:#7A4800}.tst{background:#FFF0E0;color:#9B5500;border:1px solid #F0C080}
+.btn{padding:7px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;white-space:nowrap;border:none;font-family:inherit}
+.bb{background:var(--blue);color:var(--wh)}.bo{background:var(--wh);color:var(--blue);border:1.5px solid var(--blue)!important}.bg{background:var(--bg);color:#555}.br{background:var(--red-lt);color:var(--red)}.brc{background:#FDECEA;color:var(--red)}.bor{background:#FFF0E0;color:#9B5500;border:1.5px solid #F0C080!important}
+.blg{flex:1;padding:13px;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;font-family:inherit;background:var(--blue);color:var(--wh)}
+.st{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;color:var(--muted)}.st.dm{color:#B0C4D8}
+.emp{text-align:center;padding:60px 0}
+.fw{max-width:580px;margin:0 auto}
+.ft{font-size:20px;font-weight:700;color:#0E3460;margin-bottom:24px}
+.sb{margin-bottom:20px}
+.sbh{background:var(--blue);color:var(--wh);padding:7px 14px;border-radius:8px 8px 0 0;font-weight:700;font-size:12px;letter-spacing:1.2px}
+.sbh.org{background:#E67E22}
+.sbb{background:var(--wh);border:1.5px solid var(--blue-brd);border-top:none;border-radius:0 0 10px 10px;padding:16px 18px}
+.sbb.orgb{border-color:#F0C080;background:#FFFDF7}
+.fl{margin-bottom:12px}
+.fl label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px}
+.fl label.er{color:var(--red)}
+.fl input,.fl select{width:100%;padding:9px 12px;border:1.5px solid var(--brd);border-radius:8px;font-size:14px;outline:none;font-family:inherit;background:var(--wh);color:var(--txt)}
+.fl input.er,.fl select.er{border-color:#E74C3C}
+.fl input:focus,.fl select:focus{border-color:var(--blue)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.ae{background:#FEF0EF;border:1.5px solid #F5C6C2;border-radius:8px;padding:10px 14px;margin-bottom:16px;color:var(--red);font-size:13px}
+.chk-row{display:flex;align-items:center;gap:12px;padding:10px 0;cursor:pointer;user-select:none}
+.chk-row input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:#E67E22}
+.chk-label{font-size:14px;font-weight:600;color:#9B5500}
+.sub-info{background:#FFF8EE;border:1px solid #F0C080;border-radius:8px;padding:10px 14px;font-size:12px;color:#7A4800;margin-bottom:12px;line-height:1.6}
+#vw{min-height:100vh;background:var(--bg)}
+#vtb{background:var(--wh);border-bottom:1.5px solid var(--blue-brd);padding:10px 24px;display:flex;gap:10px;align-items:center;position:sticky;top:0;z-index:10;flex-wrap:wrap}
+#vtb span{color:var(--muted);font-size:13px;margin-left:4px}
+#vdoc{max-width:680px;margin:20px auto;background:var(--wh);padding:32px 44px;box-shadow:0 2px 20px rgba(0,0,0,.07);border-radius:4px}
+.vt{text-align:center;font-weight:700;font-size:12.5px;margin-bottom:3px}
+.vs2{text-align:center;font-size:10.5px;color:#555;line-height:1.5;margin-bottom:18px}
+.va{font-size:11px;line-height:1.7;color:#333;margin-bottom:22px}
+.vsec{background:var(--blue);color:var(--wh);padding:5px 12px;font-weight:700;font-size:11px;letter-spacing:1.2px}
+.vsec.org{background:#E67E22}
+.vtbl{width:100%;border-collapse:collapse;margin-bottom:14px}
+.vtbl td{padding:6px 12px;border-bottom:1px dashed var(--brd);vertical-align:top;font-size:12px;line-height:1.3}
+.vtbl td:first-child{width:200px;font-weight:600;color:#444;font-size:11.5px}
+.vtbl .bld td:last-child{font-weight:700}
+.vf{text-align:center;padding-top:14px;border-top:1px solid #E8E8E8;margin-top:6px}
+.vf img{height:52px;width:auto;margin:0 auto 6px;display:block}
+.vft{font-size:10px;color:#666;line-height:1.7}
+.sub-badge{display:inline-block;background:#FFF0E0;color:#9B5500;border:1px solid #F0C080;border-radius:4px;padding:3px 10px;font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:.5px}
+@media print{#vtb,#hdr{display:none!important}#vdoc{margin:0;padding:20px 30px;box-shadow:none;max-width:100%}body{background:#fff}.vtbl td{padding:4px 10px;font-size:11px}.vtbl td:first-child{font-size:10.5px}.vsec{padding:4px 10px;font-size:10px}.vt{font-size:11.5px}.vs2{font-size:10px;margin-bottom:12px}.va{font-size:10px;margin-bottom:14px;line-height:1.5}.vf img{height:40px}.vft{font-size:9px}}
+#aw{position:fixed;inset:0;background:#0066CC;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#ac{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:14px 18px;z-index:10;background:linear-gradient(to bottom,rgba(0,80,160,.6),transparent)}
+#ac button{background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);border:none;border-radius:8px;padding:8px 18px;cursor:pointer;font-size:13px;font-family:inherit}
+#an{color:#fff;font-weight:800;text-align:center;line-height:1.05;letter-spacing:-.02em;word-break:break-word;width:100%;text-transform:uppercase}
+.dw{max-width:560px;margin:0 auto}.dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.dc{background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:10px;padding:14px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.dn{font-weight:700;font-size:15px;color:#0E3460}.dm2{font-size:13px;color:var(--muted)}
+.adf{background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:12px;padding:20px;margin-bottom:16px}
+.sw{max-width:560px;margin:0 auto}
+.sbox2{background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:12px;padding:22px;margin-bottom:16px}
+.tip{background:#FFF5E6;border:1.5px solid #FFD699;border-radius:10px;padding:14px 18px;font-size:12px;color:#7A4800;line-height:1.7}
+.ok-box{background:#EBF7E3;border:1.5px solid #A8D5A2;border-radius:12px;padding:18px 22px;margin-bottom:20px}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <img id="logo" alt="Crénolia">
+  <div id="nav">
+    <button class="nb on" onclick="showView('list')" id="nav-list">Réservations</button>
+    <button class="nb" onclick="showView('drivers')" id="nav-drivers">Chauffeurs</button>
+    <button class="nb" onclick="showView('settings')" id="nav-settings">⚙️ Sync</button>
+    <button id="sp" class="off" onclick="syncNow()" title="Synchroniser">
+      <span class="sdot" id="sdot"></span><span id="slbl">Non configuré</span>
+    </button>
+    <button class="btn-new" onclick="openForm(null)">+ Nouvelle</button>
+  </div>
+</div>
+<div id="main">
+  <div id="view-list"></div>
+  <div id="view-form" class="hidden"></div>
+  <div id="view-drivers" class="hidden"></div>
+  <div id="view-settings" class="hidden"></div>
+</div>
+<div id="view-voucher" class="hidden">
+  <div id="vw">
+    <div id="vtb">
+      <button class="btn bg" onclick="showView('list')">← Retour</button>
+      <button class="btn bb" onclick="window.print()">🖨 Imprimer</button>
+      <button class="btn bor" id="btn-stv" onclick="switchVMode()" style="display:none">📋 Voir bon ST</button>
+      <span id="vpn"></span>
+    </div>
+    <div id="vdoc"></div>
+  </div>
+</div>
+<div id="view-accueil" class="hidden">
+  <div id="aw">
+    <div id="ac">
+      <button onclick="showView('list')">← Retour</button>
+      <button id="bfs" onclick="toggleFS()">Plein écran</button>
+    </div>
+    <div id="an"></div>
+  </div>
+</div>
+<script>
+
+var LOGO="data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAD6APoDASIAAhEBAxEB/8QAHQABAAIDAQEBAQAAAAAAAAAAAAMIAgYHBQQBCf/EAE8QAAEDAgIFCAUGCQgLAAAAAAEAAgMEBQYRBxITIZEIMTJBUWFxchQiM1OBFTd1obGzFiNCUmJzgrLCCTU2Y3SSosEXGCQlNFVWk5TR0v/EABoBAQADAQEBAAAAAAAAAAAAAAADBAUCAQb/xAA0EQABBAECBAIIBgIDAAAAAAAAAQIDBBEFEhMhMUFRgRQVMpGhsdHwIiM0YXHhBsFDRPH/2gAMAwEAAhEDEQA/ALH6F9GGGdGmDaK0Wi30/pmxaa2uMYMtVLl6znO58s88m8wG5b1so/ds4JD7FnlCyQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQGOyj92zgmyj92zgskQHn32x2a/Wue13q10dwop2lssFRC17HA9x+1VRvHIts893rJrfieqpKOSd7qeAsDtlGXEtZrHechkMz2K3ygd0j4oCWH2LPKFksYfYs8oWSAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCgd0j4qdQO6R8UBLD7FnlCyWMPsWeULJAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBQO6R8VOoHdI+KAlh9izyhZLGH2LPKFkgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAoHdI+KnUDukfFASw+xZ5QsljD7FnlCyQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAREQBERAEREAUDukfFTqB3SPigJYfYs8oWSxh9izyhZIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAIiIAiIgCIiAKB3SPip1A7pHxQEsPsWeULJYw+xZ5QskAREQBERAEREARFp+PtJOFMFxuZda8S1uWbaKnyfM7xHM0d7iFJHE+V21iZU4kkbG3c9cIbgvFxPivDmGYNtfbzR0IIza2ST13eDB6x+AVZ8daecWXxz6ay6lho3bhsTr1Dh3vPN+yB4rQosOYqu8c92darnURAF89bUsc1gHa6WTIcStyDQnY3WHbU8P76fMyJtYTO2Fu77+/A7/iblGWClLosP2asuTxuEs7hBH4gb3HgFodVpx0lX+r9FsVLTU8jtzYqGiM8n+LW+wLl9jqrfQ3Nk9ztTbtTsO+nNS6Jrz3ubvI8Ml2fDGnuzWKibR0ej6noIAOjRVTWg95zYMz4laT9Pirp+TDvX91T/AH9Cgy9JOv5su1P2Rfv4nz0dm5Q9+G1fX3aiY7rnq2U3+FvrDgvV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";
+document.getElementById('logo').src = LOGO;
+
+var CFG = {binId:'', apiKey:''};
+try { CFG = JSON.parse(localStorage.getItem('cren-cfg') || '{}'); } catch(e) {}
+function saveCfg() { localStorage.setItem('cren-cfg', JSON.stringify(CFG)); }
+var JB = 'https://api.jsonbin.io/v3';
+
+var RES = [], DRV = [{id:'d1', name:'Lucnor LAROCHEL', vehicle:'Tesla Model Y', plate:'GK-580-RX', updatedAt:'0'}];
+function loadLocal() {
+  try {
+    var r = localStorage.getItem('cren-res'), d = localStorage.getItem('cren-drv');
+    if (r) RES = JSON.parse(r);
+    if (d) DRV = JSON.parse(d);
+  } catch(e) {}
+}
+function saveLocal() {
+  localStorage.setItem('cren-res', JSON.stringify(RES));
+  localStorage.setItem('cren-drv', JSON.stringify(DRV));
+}
+loadLocal();
+
+function setSS(state, lbl) {
+  var p = document.getElementById('sp'), l = document.getElementById('slbl'), d = document.getElementById('sdot');
+  p.className = state; l.textContent = lbl;
+  d.className = 'sdot' + (state === 'syncing' ? ' spinning' : '');
+}
+function syncNow() {
+  if (!CFG.binId || !CFG.apiKey) { showView('settings'); return; }
+  setSS('syncing', 'Sync...');
+  fetch(JB + '/b/' + CFG.binId + '/latest', {headers: {'X-Master-Key': CFG.apiKey}})
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data) {
+      var remote = data.record;
+      function merge(a, b) {
+        var m = {};
+        (a || []).concat(b || []).forEach(function(x) {
+          if (!m[x.id] || (x.updatedAt || '') > (m[x.id].updatedAt || '')) m[x.id] = x;
+        });
+        return Object.values(m);
+      }
+      RES = merge(RES, remote.reservations);
+      DRV = merge(DRV, remote.drivers);
+      saveLocal();
+      return fetch(JB + '/b/' + CFG.binId, {
+        method: 'PUT',
+        headers: {'Content-Type': 'application/json', 'X-Master-Key': CFG.apiKey},
+        body: JSON.stringify({reservations: RES, drivers: DRV, at: new Date().toISOString()})
+      });
+    })
+    .then(function() {
+      var t = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+      setSS('ok', 'OK ' + t);
+      if (CV === 'list') renderList();
+      if (CV === 'drivers') renderDrivers();
+    })
+    .catch(function(e) { setSS('err', 'Erreur sync'); console.error(e); });
+}
+function pushData() {
+  if (!CFG.binId || !CFG.apiKey) return;
+  fetch(JB + '/b/' + CFG.binId, {
+    method: 'PUT',
+    headers: {'Content-Type': 'application/json', 'X-Master-Key': CFG.apiKey},
+    body: JSON.stringify({reservations: RES, drivers: DRV, at: new Date().toISOString()})
+  })
+  .then(function() {
+    var t = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    setSS('ok', 'OK ' + t);
+  })
+  .catch(function() { setSS('err', 'Erreur'); });
+}
+setInterval(function() { if (CFG.binId && CFG.apiKey) syncNow(); }, 60000);
+if (CFG.binId && CFG.apiKey) { setSS('syncing', 'Sync...'); setTimeout(syncNow, 600); }
+
+var CV = 'list';
+function showView(v) {
+  ['list','form','drivers','voucher','accueil','settings'].forEach(function(x) {
+    var el = document.getElementById('view-' + x);
+    if (el) el.classList.toggle('hidden', x !== v);
+  });
+  var fp = (v === 'voucher' || v === 'accueil');
+  document.getElementById('main').classList.toggle('hidden', fp);
+  document.getElementById('hdr').classList.toggle('hidden', v === 'accueil');
+  ['list','drivers','settings'].forEach(function(x) {
+    var b = document.getElementById('nav-' + x);
+    if (b) b.classList.toggle('on', x === v);
+  });
+  CV = v;
+  if (v === 'list') renderList();
+  if (v === 'drivers') renderDrivers();
+  if (v === 'settings') renderSettings();
+}
+
+function E(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderList() {
+  var el = document.getElementById('view-list');
+  if (!RES.length) {
+    el.innerHTML = '<div class="emp"><div style="font-size:52px;margin-bottom:16px">&#128665;</div><p style="font-size:16px;color:#888">Aucune r&eacute;servation.<br>Cliquez sur <strong style="color:#0066CC">+ Nouvelle</strong> pour commencer.</p></div>';
+    return;
+  }
+  var now = new Date();
+  function dt(r) { return new Date((r.pickupDate || '2000-01-01') + 'T' + (r.pickupTime || '00:00')); }
+  var up = RES.filter(function(r) { return dt(r) >= now; }).sort(function(a,b) { return dt(a)-dt(b); });
+  var pa = RES.filter(function(r) { return dt(r) < now; }).sort(function(a,b) { return dt(b)-dt(a); });
+  var h = '';
+  if (up.length) {
+    h += '<div class="st">' + up.length + ' r&eacute;servation' + (up.length > 1 ? 's' : '') + ' &agrave; venir</div>';
+    up.forEach(function(r) { h += cHTML(r); });
+  }
+  if (pa.length) {
+    h += '<div class="st dm">' + pa.length + ' pass&eacute;e' + (pa.length > 1 ? 's' : '') + '</div>';
+    pa.forEach(function(r) { h += cHTML(r); });
+  }
+  el.innerHTML = h;
+}
+
+function cHTML(r) {
+  var drv = DRV.find(function(d) { return d.id === r.driverId; });
+  var ds = r.pickupDate ? new Date(r.pickupDate).toLocaleDateString('fr-FR', {weekday:'short',day:'numeric',month:'long'}) : '&mdash;';
+  var isSub = r.isSubcontracted && r.subcontractorName;
+  var flTag = r.flightNumber ? ' &middot; &#9992;&nbsp;' + E(r.flightNumber) : '';
+  var h = '<div class="card' + (isSub ? ' subc' : '') + '">';
+  h += '<div style="flex:1;min-width:0">';
+  h += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="cn" style="margin-bottom:0">' + E(r.passengerName || 'Passager') + '</span>';
+  if (isSub) h += '<span class="tag tst">&#128260; Sous-trait&eacute; &rarr; ' + E(r.subcontractorName) + '</span>';
+  h += '</div>';
+  h += '<div class="cm">' + ds + ' &middot; ' + (r.pickupTime || '&mdash;') + ' &middot; ' + (r.passengerCount || 1) + ' pax' + flTag + '</div>';
+  h += '<div class="ct">';
+  h += '<span class="tag tb">&#9992;&nbsp;' + E(r.pickupLocation || '&mdash;') + '</span>';
+  h += '<span class="tag tg">&#128205;&nbsp;' + E(r.destination || '&mdash;') + '</span>';
+  if (!isSub && r.fare) h += '<span class="tag to">&#128182;&nbsp;' + E(r.fare) + '&euro;</span>';
+  if (isSub && r.subcontractorFare) h += '<span class="tag tst">&#128182;&nbsp;ST: ' + E(r.subcontractorFare) + '&euro;</span>';
+  h += '</div>';
+  if (drv) h += '<div class="cd">&#128665;&nbsp;' + E(drv.name) + ' &middot; ' + E(drv.vehicle) + ' ' + E(drv.plate) + '</div>';
+  h += '</div>';
+  h += '<div class="ca">';
+  h += '<button class="btn bb" onclick="openAccueil(\'' + r.id + '\')">&#128250; Accueil</button>';
+  h += '<button class="btn bo" onclick="openVoucher(\'' + r.id + '\',\'client\')">&#128424; Bon client</button>';
+  if (isSub) h += '<button class="btn bor" onclick="openVoucher(\'' + r.id + '\',\'sub\')">&#128203; Bon ST</button>';
+  h += '<button class="btn bg" onclick="openForm(\'' + r.id + '\')">&#9999; Modifier</button>';
+  h += '<button class="btn br" onclick="delConfirm(this,\'' + r.id + '\')">&#128465; Suppr.</button>';
+  h += '</div></div>';
+  return h;
+}
+
+function delConfirm(btn, id) {
+  if (btn.dataset.c) {
+    RES = RES.filter(function(r) { return r.id !== id; });
+    saveLocal(); pushData(); renderList();
+  } else {
+    btn.dataset.c = '1'; btn.textContent = 'Confirmer ?'; btn.className = 'btn brc';
+  }
+}
+
+function buildDriverOpts(selectedId) {
+  var o = '<option value="">— Aucun —</option>';
+  DRV.forEach(function(d) {
+    o += '<option value="' + E(d.id) + '"' + (d.id === selectedId ? ' selected' : '') + '>' + E(d.name) + ' — ' + E(d.vehicle) + ' ' + E(d.plate) + '</option>';
+  });
+  return o;
+}
+function buildPaxOpts(selected) {
+  var o = '';
+  [1,2,3,4,5,6,7,8].forEach(function(n) {
+    o += '<option value="' + n + '"' + (String(selected) === String(n) ? ' selected' : '') + '>' + n + '</option>';
+  });
+  return o;
+}
+
+var EID = null;
+function openForm(id) {
+  EID = id;
+  var r = id ? RES.find(function(x) { return x.id === id; }) : null;
+  var now = new Date();
+  var v = r || {
+    orderedAt: now.toLocaleDateString('fr-FR') + ' ' + now.toTimeString().slice(0,5),
+    pickupDate: now.toISOString().split('T')[0], pickupTime: '',
+    pickupLocation: '', destination: '', fare: '', flightNumber: '',
+    passengerName: '', phone: '', passengerCount: '2',
+    driverId: DRV[0] ? DRV[0].id : '',
+    isSubcontracted: false, subcontractorName: '', subcontractorFare: '', subcontractorNote: ''
+  };
+  var h = '<div class="fw">';
+  h += '<h2 class="ft">' + (r ? 'Modifier la r&eacute;servation' : 'Nouvelle r&eacute;servation') + '</h2>';
+  h += '<div class="sb"><div class="sbh">VOYAGE</div><div class="sbb">';
+  h += '<div class="g2">';
+  h += '<div class="fl"><label>Date commande</label><input id="fo" value="' + E(v.orderedAt) + '"></div>';
+  h += '<div class="fl"><label>Tarif client (&euro;)</label><input id="ff" type="number" min="0" value="' + E(v.fare) + '" placeholder="60"></div>';
+  h += '<div class="fl"><label id="lp">Date prise en charge *</label><input id="fd" type="date" value="' + E(v.pickupDate) + '"></div>';
+  h += '<div class="fl"><label>Heure</label><input id="ft2" type="time" value="' + E(v.pickupTime) + '"></div>';
+  h += '</div>';
+  h += '<div class="fl"><label id="ll">Lieu de prise en charge *</label><input id="fl2" value="' + E(v.pickupLocation) + '" placeholder="ORLY Terminal 1 easyJet EJU4872"></div>';
+  h += '<div class="fl"><label id="ld">Destination *</label><input id="fde" value="' + E(v.destination) + '" placeholder="Best Western Trocadero, 75016 PARIS"></div>';
+  h += '</div></div>';
+  h += '<div class="sb"><div class="sbh">PASSAGER</div><div class="sbb">';
+  h += '<div class="fl"><label id="ln">Nom Pr&eacute;nom *</label><input id="fn" value="' + E(v.passengerName) + '" placeholder="Fanny Diaz &amp; Jesus Herazo"></div>';
+  h += '<div class="g3">';
+  h += '<div class="fl"><label>T&eacute;l&eacute;phone</label><input id="fph" value="' + E(v.phone) + '" placeholder="+1 864-449-71-40"></div>';
+  h += '<div class="fl"><label>N&deg; de vol</label><input id="ffl" value="' + E(v.flightNumber) + '" placeholder="EJU4872"></div>';
+  h += '<div class="fl"><label>Passagers</label><select id="fps">' + buildPaxOpts(v.passengerCount) + '</select></div>';
+  h += '</div></div></div>';
+  h += '<div class="sb"><div class="sbh">CHAUFFEUR</div><div class="sbb">';
+  h += '<div class="fl"><label>Chauffeur assign&eacute;</label><select id="fdr">' + buildDriverOpts(v.driverId) + '</select></div>';
+  h += '</div></div>';
+  h += '<div class="sb"><div class="sbh org">SOUS-TRAITANCE</div><div class="sbb orgb">';
+  h += '<label class="chk-row"><input type="checkbox" id="fsub" ' + (v.isSubcontracted ? 'checked' : '') + ' onchange="toggleSubForm()"><span class="chk-label">&#128260; Ce transfert est sous-trait&eacute;</span></label>';
+  h += '<div id="sub-fields" class="' + (v.isSubcontracted ? '' : 'hidden') + '">';
+  h += '<div class="sub-info">En tant que <strong>donneur d&#39;ordre</strong>, le bon sous-traitant n&#39;affichera <strong>pas le tarif client</strong>.</div>';
+  h += '<div class="g2">';
+  h += '<div class="fl"><label>Nom du sous-traitant</label><input id="fstn" value="' + E(v.subcontractorName) + '" placeholder="Paris VTC Services"></div>';
+  h += '<div class="fl"><label>Tarif sous-traitant (&euro;)</label><input id="fstf" type="number" min="0" value="' + E(v.subcontractorFare) + '" placeholder="45"></div>';
+  h += '</div>';
+  h += '<div class="fl"><label>Note interne</label><input id="fsnote" value="' + E(v.subcontractorNote) + '" placeholder="Contact: 06 xx xx xx xx"></div>';
+  h += '</div></div></div>';
+  h += '<div id="fa" class="ae hidden">Veuillez remplir tous les champs obligatoires (*).</div>';
+  h += '<div style="display:flex;gap:10px">';
+  h += '<button class="blg" onclick="saveForm()">' + (r ? '&#10003; Enregistrer' : '&#10003; Cr&eacute;er la r&eacute;servation') + '</button>';
+  h += '<button class="btn bg" style="padding:13px 22px;font-size:14px" onclick="showView(\'list\')">Annuler</button>';
+  h += '</div></div>';
+  document.getElementById('view-form').innerHTML = h;
+  showView('form');
+}
+
+function toggleSubForm() {
+  var c = document.getElementById('fsub').checked;
+  document.getElementById('sub-fields').classList.toggle('hidden', !c);
+}
+function gv(id) { var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+function saveForm() {
+  var ok = true;
+  var fields = [['fn','ln'],['fd','lp'],['fl2','ll'],['fde','ld']];
+  fields.forEach(function(pair) {
+    var inp = document.getElementById(pair[0]), lbl = document.getElementById(pair[1]);
+    var empty = !gv(pair[0]);
+    if (inp) inp.classList.toggle('er', empty);
+    if (lbl) {
+      lbl.textContent = lbl.textContent.replace(' \u2014 Obligatoire','') + (empty ? ' \u2014 Obligatoire' : '');
+      lbl.classList.toggle('er', empty);
+    }
+    if (empty) ok = false;
+  });
+  document.getElementById('fa').classList.toggle('hidden', ok);
+  if (!ok) return;
+  var isSub = document.getElementById('fsub').checked;
+  var res = {
+    id: EID || Date.now().toString(), updatedAt: new Date().toISOString(),
+    orderedAt: gv('fo'), pickupDate: gv('fd'), pickupTime: gv('ft2'),
+    pickupLocation: gv('fl2'), destination: gv('fde'), fare: gv('ff'),
+    flightNumber: gv('ffl'), passengerName: gv('fn'), phone: gv('fph'),
+    passengerCount: document.getElementById('fps').value,
+    driverId: document.getElementById('fdr').value,
+    isSubcontracted: isSub,
+    subcontractorName: isSub ? gv('fstn') : '',
+    subcontractorFare: isSub ? gv('fstf') : '',
+    subcontractorNote: isSub ? gv('fsnote') : ''
+  };
+  if (EID) { RES = RES.map(function(r) { return r.id === EID ? res : r; }); }
+  else { RES.unshift(res); }
+  saveLocal(); pushData(); showView('list');
+}
+
+var vID = null, vMode = 'client';
+function switchVMode() { vMode = (vMode === 'client' ? 'sub' : 'client'); renderVoucher(vID, vMode); }
+function openVoucher(id, mode) {
+  vID = id; vMode = mode || 'client';
+  renderVoucher(id, vMode);
+  document.getElementById('hdr').classList.add('hidden');
+  document.getElementById('main').classList.add('hidden');
+  ['list','form','drivers','accueil','settings'].forEach(function(v) {
+    var el = document.getElementById('view-' + v); if (el) el.classList.add('hidden');
+  });
+  document.getElementById('view-voucher').classList.remove('hidden');
+  CV = 'voucher';
+}
+function vrow(l, v, b) { return '<tr class="' + (b ? 'bld' : '') + '"><td>' + E(l) + '</td><td>' + E(v || '\u2014') + '</td></tr>'; }
+function renderVoucher(id, mode) {
+  var r = RES.find(function(x) { return x.id === id; }); if (!r) return;
+  var drv = DRV.find(function(d) { return d.id === r.driverId; });
+  var isSub = r.isSubcontracted && r.subcontractorName;
+  var isST = (mode === 'sub') && isSub;
+  var pf = r.pickupDate ? new Date(r.pickupDate).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) + ' ' + (r.pickupTime || '') : '\u2014';
+  var btn = document.getElementById('btn-stv');
+  if (isSub) { btn.style.display = ''; btn.textContent = isST ? 'Voir bon client' : 'Voir bon ST'; }
+  else { btn.style.display = 'none'; }
+  document.getElementById('vpn').textContent = r.passengerName + (isST ? ' \u2014 BON SOUS-TRAITANT' : '');
+  var flRow = r.flightNumber ? vrow('N\u00b0 de vol', r.flightNumber) : '';
+  var html = '';
+  if (isST) {
+    html += '<div style="text-align:center;margin-bottom:16px"><span class="sub-badge">BON DE SOUS-TRAITANCE \u2014 CONFIDENTIEL</span></div>';
+    html += '<p class="vt">SERVICE DE VOITURE DE TRANSPORT AVEC CHAUFFEUR</p>';
+    html += '<p class="vt">ORDRE DE MISSION \u2014 SOUS-TRAITANCE</p>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:22px;font-size:11px;line-height:1.8">';
+    html += '<div><strong style="font-size:10px;color:#7A97B5;text-transform:uppercase;letter-spacing:.5px">Donneur d&#39;ordre</strong><br>CRENOLIA SAS<br>1 Impasse du Gu&eacute;, 75018 PARIS<br>07 60 00 00 45</div>';
+    html += '<div><strong style="font-size:10px;color:#9B5500;text-transform:uppercase;letter-spacing:.5px">Prestataire</strong><br><strong>' + E(r.subcontractorName) + '</strong></div>';
+    html += '</div>';
+    html += '<div class="vsec org">MISSION</div>';
+    html += '<table class="vtbl">' + vrow('Date et heure de prise en charge', pf) + vrow('Lieu de prise en charge', r.pickupLocation) + vrow('Destination', r.destination, true) + vrow('Tarif convenu', r.subcontractorFare ? r.subcontractorFare + '\u20ac' : '\u00c0 confirmer', true) + '</table>';
+    html += '<div class="vsec org">PASSAGER</div>';
+    html += '<table class="vtbl">' + vrow('Nom Pr\u00e9nom', r.passengerName, true) + vrow('T\u00e9l\u00e9phone', r.phone) + flRow + vrow('Nombre de passagers', r.passengerCount, true) + '</table>';
+    html += '<div class="vf"><img src="' + LOGO + '" alt="Cr\u00e9nolia"><div class="vft">CRENOLIA SAS \u2014 DONNEUR D&#39;ORDRE &middot; EVTC094190272<br>TVA: FR77849200910 &middot; SIREN: 849 200 910 00024 &middot; www.crenolia.com</div></div>';
+  } else {
+    var chauffeurName = isSub ? E(r.subcontractorName) : (drv ? E(drv.name) : '\u2014');
+    var chauffeurVeh  = isSub ? 'V\u00e9hicule partenaire' : (drv ? E(drv.vehicle) + ' : ' + E(drv.plate) : '\u2014');
+    html += '<p class="vt">SERVICE DE VOITURE DE TRANSPORT AVEC CHAUFFEUR</p>';
+    html += '<p class="vt">JUSTIFICATIF DE R\u00c9SERVATION PR\u00c9ALABLE</p>';
+    html += '<p class="vs2">(Conform\u00e9ment aux articles L3120-2 et L3122-9 du Code des transports<br>et \u00e0 l&#39;Arr\u00eat\u00e9 du 6 ao\u00fbt 2025 \u2013 JORF n\u00b0200)</p>';
+    html += '<div class="va">CRENOLIA SAS<br>1 Impasse du Gu&eacute;<br>75018 PARIS<br>07 60 00 00 45<br>contact@crenolia.com</div>';
+    html += '<div class="vsec">VOYAGE</div>';
+    html += '<table class="vtbl">' + vrow('Date et heure de la Commande', r.orderedAt) + vrow('Date et heure de prise en charge', pf) + vrow('Lieu de prise en charge', r.pickupLocation) + vrow('Destination', r.destination, true) + vrow('Tarif', r.fare ? r.fare + '\u20ac' : '\u2014') + '</table>';
+    html += '<div class="vsec">PASSAGER</div>';
+    html += '<table class="vtbl">' + vrow('Nom Pr\u00e9nom', r.passengerName, true) + vrow('T\u00e9l\u00e9phone', r.phone) + flRow + vrow('Nombre de passagers', r.passengerCount, true) + '</table>';
+    html += '<div class="vsec">CHAUFFEUR</div>';
+    html += '<table class="vtbl">' + vrow('Nom Pr\u00e9nom', chauffeurName, true) + vrow('V\u00e9hicule', chauffeurVeh, true) + '</table>';
+    html += '<div class="vf"><img src="' + LOGO + '" alt="Cr\u00e9nolia"><div class="vft">CRENOLIA SAS, SOCI\u00c9T\u00c9 DE SERVICE VTC \u00c0 PARIS<br>DEPUIS 2019 ENREGISTR\u00c9E AU NUM\u00c9RO EVTC094190272<br>TVA : FR77849200910 &nbsp;&middot;&nbsp; SIREN : 849 200 910 00024<br>www.crenolia.com</div></div>';
+  }
+  document.getElementById('vdoc').innerHTML = html;
+}
+
+function openAccueil(id) {
+  var r = RES.find(function(x) { return x.id === id; }); if (!r) return;
+  var name = (r.passengerName || 'Passager').toUpperCase();
+  var el = document.getElementById('an'); el.textContent = name; setAFS(el, name.length); showView('accueil');
+}
+function setAFS(el, len) {
+  var land = window.innerWidth > window.innerHeight;
+  el.style.fontSize = land ? (len>30?'clamp(40px,7vh,90px)':len>18?'clamp(60px,10vh,130px)':'clamp(80px,14vh,180px)') : (len>30?'clamp(32px,6vw,72px)':len>18?'clamp(48px,9vw,110px)':'clamp(64px,13vw,160px)');
+  el.style.padding = land ? '0 40px' : '80px 30px 30px';
+}
+window.addEventListener('resize', function() { if (CV==='accueil'){var el=document.getElementById('an');if(el)setAFS(el,el.textContent.length);} });
+window.addEventListener('orientationchange', function() { setTimeout(function(){if(CV==='accueil'){var el=document.getElementById('an');if(el)setAFS(el,el.textContent.length);}},300); });
+function toggleFS() {
+  var w = document.getElementById('aw');
+  if (!document.fullscreenElement) (w.requestFullscreen||w.webkitRequestFullscreen||w.mozRequestFullScreen).call(w);
+  else (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen).call(document);
+}
+function updFS() { var b=document.getElementById('bfs'); if(b) b.textContent = document.fullscreenElement ? 'Quitter plein \u00e9cran' : 'Plein \u00e9cran'; }
+document.addEventListener('fullscreenchange', updFS);
+document.addEventListener('webkitfullscreenchange', updFS);
+
+function renderDrivers() {
+  var el = document.getElementById('view-drivers');
+  var list = '';
+  DRV.forEach(function(d) {
+    list += '<div class="dc"><div><div class="dn">' + E(d.name) + '</div><div class="dm2">' + E(d.vehicle) + ' &middot; ' + E(d.plate) + '</div></div>'
+          + '<button class="btn br" onclick="removeDriver(\'' + d.id + '\')">Supprimer</button></div>';
+  });
+  el.innerHTML = '<div class="dw"><div class="dh"><h2 style="font-size:20px;font-weight:700;color:#0E3460">Chauffeurs</h2>'
+    + '<button class="btn bb" onclick="toggleAddDrv()">+ Ajouter</button></div>'
+    + '<div id="adf" class="adf hidden">'
+    + '<div id="da" class="ae hidden">Le nom est obligatoire.</div>'
+    + '<div class="fl"><label>Nom Pr&eacute;nom *</label><input id="dn2" placeholder="Pr&eacute;nom NOM"></div>'
+    + '<div class="g2">'
+    + '<div class="fl"><label>V&eacute;hicule</label><input id="dv2" placeholder="Tesla Model Y"></div>'
+    + '<div class="fl"><label>Plaque</label><input id="dp2" placeholder="GK-580-RX"></div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:4px">'
+    + '<button class="btn bb" onclick="addDriver()">Enregistrer</button>'
+    + '<button class="btn bg" onclick="document.getElementById(\'adf\').classList.add(\'hidden\')">Annuler</button>'
+    + '</div></div>' + list + '</div>';
+}
+function toggleAddDrv() { document.getElementById('adf').classList.toggle('hidden'); }
+function addDriver() {
+  var name = gv('dn2');
+  if (!name) { document.getElementById('da').classList.remove('hidden'); return; }
+  document.getElementById('da').classList.add('hidden');
+  DRV.push({id:Date.now().toString(), updatedAt:new Date().toISOString(), name:name, vehicle:gv('dv2'), plate:gv('dp2')});
+  saveLocal(); pushData(); renderDrivers();
+}
+function removeDriver(id) { DRV = DRV.filter(function(d){return d.id!==id;}); saveLocal(); pushData(); renderDrivers(); }
+
+function renderSettings() {
+  var ok = !!(CFG.binId && CFG.apiKey);
+  var inner = ok
+    ? '<div class="ok-box"><div style="font-weight:700;color:#2C6E12;margin-bottom:8px">&#10003; Synchronisation active</div>'
+      + '<div style="font-size:12px;color:#2C6E12;line-height:1.8">Bin ID : <code style="background:rgba(0,0,0,.06);padding:1px 6px;border-radius:4px">' + E(CFG.binId) + '</code></div>'
+      + '<div style="display:flex;gap:8px;margin-top:14px">'
+      + '<button class="btn bb" style="font-size:13px;padding:9px 18px" onclick="syncNow()">Synchroniser</button>'
+      + '<button class="btn bg" style="font-size:13px;padding:9px 18px" onclick="disconnectSync()">D&eacute;connecter</button>'
+      + '</div></div>'
+    : '<div class="sbox2">'
+      + '<p style="font-size:13px;font-weight:700;color:#0E3460;margin-bottom:12px">Configuration JSONBin (gratuit)</p>'
+      + '<ol style="list-style:decimal;padding-left:18px;margin-bottom:16px;font-size:13px;line-height:1.8">'
+      + '<li>Cr&eacute;ez un compte sur <a href="https://jsonbin.io" target="_blank" style="color:#0066CC">jsonbin.io</a></li>'
+      + '<li>Dashboard &rarr; API Keys &rarr; copiez votre <strong>Master Key</strong></li>'
+      + '<li>Collez-la ci-dessous &rarr; Cr&eacute;er &amp; Connecter</li>'
+      + '</ol>'
+      + '<div class="fl"><label>Master Key *</label><input id="cfg-key" placeholder="$2a$10$..." value="' + E(CFG.apiKey || '') + '"></div>'
+      + '<button class="btn bb" style="padding:10px 20px;font-size:13px;width:100%;margin-bottom:14px" onclick="createBin()">Cr&eacute;er &amp; Connecter (1&egrave;re fois)</button>'
+      + '<div style="border-top:1px solid var(--blue-brd);padding-top:14px">'
+      + '<p style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:10px;text-transform:uppercase">D&eacute;j&agrave; configur&eacute; ? Connecter cet appareil</p>'
+      + '<div class="fl"><label>Bin ID</label><input id="cfg-bid" placeholder="64abc..." value="' + E(CFG.binId || '') + '"></div>'
+      + '<button class="btn bo" style="padding:9px 18px;font-size:13px" onclick="connectExisting()">Connecter</button>'
+      + '</div></div>';
+  document.getElementById('view-settings').innerHTML = '<div class="sw">'
+    + '<h2 class="ft">Synchronisation multi-appareils</h2>'
+    + '<p style="font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6">Connectez <strong>JSONBin.io</strong> (gratuit) pour synchroniser en temps r&eacute;el entre tous vos appareils.</p>'
+    + inner
+    + '<div class="tip">Gratuit et s&eacute;curis&eacute;. 10 000 requ&ecirc;tes/mois, donn&eacute;es priv&eacute;es prot&eacute;g&eacute;es par votre cl&eacute; API.</div>'
+    + '</div>';
+}
+function createBin() {
+  var key = gv('cfg-key'); if (!key) { alert('Entrez votre Master Key'); return; }
+  setSS('syncing', 'Cr&eacute;ation...');
+  fetch(JB + '/b', {method:'POST', headers:{'Content-Type':'application/json','X-Master-Key':key,'X-Bin-Name':'Crenolia','X-Bin-Private':'true'}, body:JSON.stringify({reservations:RES,drivers:DRV,at:new Date().toISOString()})})
+    .then(function(r){if(!r.ok)throw new Error('Cl\u00e9 invalide ('+r.status+')');return r.json();})
+    .then(function(data){CFG={binId:data.metadata.id,apiKey:key};saveCfg();setSS('ok','OK');renderSettings();})
+    .catch(function(e){setSS('err','Erreur');alert(e.message);});
+}
+function connectExisting() {
+  var key = gv('cfg-key'), bid = gv('cfg-bid');
+  if (!key || !bid) { alert('Remplissez les deux champs'); return; }
+  CFG = {binId:bid, apiKey:key}; saveCfg(); syncNow(); renderSettings();
+}
+function disconnectSync() {
+  if (!confirm('D\u00e9connecter ?')) return;
+  CFG = {binId:'', apiKey:''}; saveCfg(); setSS('off', 'Non configur\u00e9'); renderSettings();
+}
+
+renderList();
+
+</script>
+</body>
+</html>
