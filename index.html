@@ -141,9 +141,9 @@ html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var
 <div id="import-modal" class="modal-overlay hidden">
   <div class="modal">
     <h3>🤖 Importer une réservation</h3>
-    <p>Collez le texte de votre <strong>email GYG/Viator</strong> ou d&#39;une <strong>conversation WhatsApp</strong>. L&#39;IA extrait tout automatiquement.</p>
+    <p>Collez le texte de n&#39;importe quel <strong>email ou message</strong> contenant les infos de réservation. L&#39;IA extrait automatiquement le nom, la date, le lieu, le prix...</p>
     <div style="display:flex;gap:8px;margin-bottom:10px">
-      <button id="tab-email" class="btn bb" onclick="setImportTab('email')" style="font-size:12px;padding:6px 13px">✉️ Email GYG / Viator</button>
+      <button id="tab-email" class="btn bb" onclick="setImportTab('email')" style="font-size:12px;padding:6px 13px">✉️ Email (tout format)</button>
       <button id="tab-whatsapp" class="btn bg" onclick="setImportTab('whatsapp')" style="font-size:12px;padding:6px 13px;background:#25D366;color:#fff">💬 WhatsApp</button>
     </div>
     <div id="import-hint" style="background:#F3F7FC;border-radius:8px;padding:8px 12px;font-size:12px;color:#7A97B5;margin-bottom:8px;line-height:1.5"></div>
@@ -329,7 +329,7 @@ function buildForm(v, isEdit) {
   h += '<h2 class="ft">'+(isEdit?'Modifier la réservation':'Nouvelle réservation')+'</h2>';
   if (!isEdit) {
     h += '<div class="g2" style="margin-bottom:18px">';
-    h += '<button type="button" class="btn bb" style="padding:10px;font-size:12px;border-radius:10px;width:100%" onclick="openImportModal(\'email\')">✉️ Importer email GYG/Viator</button>';
+    h += '<button type="button" class="btn bb" style="padding:10px;font-size:12px;border-radius:10px;width:100%" onclick="openImportModal(\'email\')">✉️ Importer un email</button>';
     h += '<button type="button" class="btn bb" style="padding:10px;font-size:12px;border-radius:10px;width:100%;background:#25D366" onclick="openImportModal(\'whatsapp\')">💬 Importer WhatsApp</button>';
     h += '</div>';
   }
@@ -566,13 +566,13 @@ function setImportTab(tab) {
   document.getElementById('tab-whatsapp').style.background=(tab==='whatsapp')?'#25D366':'';
   document.getElementById('tab-whatsapp').style.color=(tab==='whatsapp')?'#fff':'';
   var hints={
-    email:'Collez le texte complet de votre email GetYourGuide ou Viator',
+    email:'Collez le texte de n\'importe quel email de réservation : GetYourGuide, Viator, email direct d\'un client, confirmation hôtel, agence de voyage...',
     whatsapp:'Copiez TOUTE la conversation WhatsApp (même sur plusieurs messages). L\'IA rassemble les infos éparpillées : noms dans un message, hôtel dans un autre...'
   };
   document.getElementById('import-hint').textContent=hints[tab];
   document.getElementById('email-input').placeholder=(tab==='whatsapp')
     ?'Ex: 4 Passengers: ALICIA MORALES...\nDeparture Date: May 26st\nTime: 06:10 am\nFlight: AZ317 CDG Airport\n\n[Message suivant]\nThe confirmed hotel is: NOVOTEL EST BAGNOLET...'
-    :'Collez ici le texte de votre email de confirmation GetYourGuide ou Viator...';
+    :'Collez ici le texte de n\'importe quel email de réservation...\n\nExemples acceptés :\n- Email GetYourGuide / Viator\n- Email direct d\'un client\n- Confirmation d\'agence de voyage\n- Tout message contenant : nom client, date, lieu, prix';
 }
 function openImportModal(tab) {
   importTab=tab||'email';
@@ -590,7 +590,7 @@ function analyzeEmail() {
   btn.innerHTML='<span class="spinner"></span>Analyse...';
   btn.disabled=true;
   var now=new Date();
-  var sourceLabel=(importTab==='whatsapp')?'conversation WhatsApp':'email de confirmation GetYourGuide ou Viator';
+  var sourceLabel=(importTab==='whatsapp')?'conversation WhatsApp':'email de réservation';
   var extraInstr=(importTab==='whatsapp')
     ?'Il peut s\'agir d\'une conversation avec PLUSIEURS MESSAGES. Analyse tout pour reconstituer les infos : (1) passengerName = tous les noms séparés par virgules (2) Date en anglais possible : May 26st = '+now.getFullYear()+'-05-26 (3) Si hôtel mentionné dans un message séparé, utilise-le comme pickupLocation ou destination selon le sens du trajet (4) Trajet VERS aéroport : pickupLocation=hôtel, destination=aéroport ; DEPUIS aéroport : pickupLocation=aéroport, destination=hôtel (5) Ignore messages hors-sujet (6) Si info absente ou "pending", laisse vide.'
     :'Pour la destination : si transfert vers l\'aéroport, destination = aéroport. Si depuis l\'aéroport, destination = adresse de dépôt.';
