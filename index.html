@@ -96,6 +96,52 @@ html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var
 .modal-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .ai-result{background:#F3F7FC;border:1.5px solid var(--blue-brd);border-radius:10px;padding:12px;margin-top:12px;font-size:12px;line-height:1.8}
 .spinner{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+
+/* QUOTE */
+#qdoc{max-width:720px;margin:18px auto;background:var(--wh);padding:30px 42px;box-shadow:0 2px 20px rgba(0,0,0,.07);border-radius:4px}
+.ql{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.ql-fr{border-right:2px solid var(--blue-brd);padding-right:20px}
+.ql-en{padding-left:20px;color:#555}
+.q-sep{width:100%;height:1px;background:var(--blue-brd);margin:14px 0}
+.q-sec{background:var(--blue);color:var(--wh);padding:5px 12px;font-weight:700;font-size:11px;letter-spacing:1.2px;margin-bottom:0}
+.q-sec.en{background:#4A90D9}
+.qtbl{width:100%;border-collapse:collapse;margin-bottom:12px}
+.qtbl td{padding:5px 10px;border-bottom:1px dashed var(--brd);font-size:11.5px;line-height:1.3;vertical-align:top}
+.qtbl td:first-child{font-weight:600;color:#444;width:160px;font-size:11px}
+.qtbl .bld td:last-child{font-weight:700}
+.q-price{background:#EBF4FB;border:1.5px solid var(--blue-brd);border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.q-price .amt{font-size:22px;font-weight:800;color:var(--blue)}
+.q-price .lbl{font-size:11px;color:var(--muted)}
+.q-conditions{font-size:10.5px;color:#555;line-height:1.7;margin-bottom:10px;padding:10px 12px;background:#F9F9F9;border-radius:6px;border:1px solid #E8E8E8}
+.q-validity{font-size:10.5px;font-style:italic;color:#888;margin-top:4px}
+.q-footer{text-align:center;padding-top:12px;border-top:1px solid #E8E8E8;margin-top:10px}
+.q-footer img{height:44px;width:auto;margin:0 auto 6px;display:block}
+.q-footer-txt{font-size:9.5px;color:#666;line-height:1.7}
+.q-badge{display:inline-block;background:var(--blue-lt);color:var(--blue-dk);border-radius:4px;padding:2px 9px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:12px}
+@media print{#vtb,#hdr{display:none!important}#qdoc{margin:0;padding:18px 28px;box-shadow:none;max-width:100%}body{background:#fff}}
+
+
+/* CLIENTS & SERVICES */
+.cs-card{background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:10px;padding:13px 17px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cs-card:hover{border-color:var(--blue);background:var(--blue-lt)}
+.cs-card.clickable{cursor:pointer;transition:all .2s}
+.cs-main{flex:1;min-width:0}
+.cs-name{font-weight:700;font-size:14px;color:#0E3460;margin-bottom:2px}
+.cs-sub{font-size:12px;color:var(--muted);line-height:1.5}
+.cs-price{font-size:18px;font-weight:800;color:var(--blue);white-space:nowrap}
+.cs-lang{display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;background:var(--blue-lt);color:var(--blue-dk);margin-left:6px}
+.cs-lang.en{background:#EBF7E3;color:#2C6E12}
+.cs-note{font-size:11px;color:#99B0C8;font-style:italic;margin-top:2px}
+.client-picker{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px}
+.client-picker-box{background:var(--wh);border-radius:14px;padding:20px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.client-picker-box h3{font-size:15px;font-weight:700;color:#0E3460;margin-bottom:12px}
+.svc-picker{background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:10px;padding:12px;margin-bottom:10px}
+.svc-picker h4{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.svc-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .15s}
+.svc-item:hover{background:var(--blue-lt)}
+.svc-item-name{font-size:13px;color:#0E3460;font-weight:500}
+.svc-item-price{font-size:14px;font-weight:700;color:var(--blue)}
+
 .hidden{display:none!important}
 </style>
 </head>
@@ -105,6 +151,8 @@ html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var
   <div id="nav">
     <button class="nb on" onclick="showView('list')" id="nav-list">Réservations</button>
     <button class="nb" onclick="showView('drivers')" id="nav-drivers">Chauffeurs</button>
+    <button class="nb" onclick="showView('clients')" id="nav-clients">👥 Clients</button>
+    <button class="nb" onclick="showView('services')" id="nav-services">🗂 Services</button>
     <button class="nb" onclick="showView('settings')" id="nav-settings">⚙️ Sync</button>
     <button id="sp" class="off" onclick="syncNow()" title="Synchroniser">
       <span class="sdot" id="sdot"></span><span id="slbl">Non configuré</span>
@@ -117,6 +165,8 @@ html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var
   <div id="view-form" class="hidden"></div>
   <div id="view-drivers" class="hidden"></div>
   <div id="view-settings" class="hidden"></div>
+  <div id="view-clients" class="hidden"></div>
+  <div id="view-services" class="hidden"></div>
 </div>
 <div id="view-voucher" class="hidden">
   <div id="vw">
@@ -138,6 +188,30 @@ html,body{height:100%;font-family:"Trebuchet MS",Arial,sans-serif;background:var
     <div id="an"></div>
   </div>
 </div>
+
+<div id="view-quote" class="hidden">
+  <div id="vw">
+    <div id="vtb">
+      <button class="btn bg" onclick="showView('list')">← Retour</button>
+      <button class="btn bb" onclick="window.print()">🖨 Imprimer / PDF</button>
+      <button class="btn bo" id="btn-share-quote" onclick="shareQuote()">🔗 Partager le lien</button>
+      <button class="btn bg" id="btn-toggle-lang" onclick="toggleQuoteLang()">🌐 Afficher FR+EN</button>
+      <span id="qpn" style="color:var(--muted);font-size:13px;margin-left:4px"></span>
+    </div>
+    <div id="qdoc"></div>
+  </div>
+</div>
+
+
+<div id="client-picker" class="client-picker hidden">
+  <div class="client-picker-box">
+    <h3>👥 Choisir un client</h3>
+    <input id="client-search" style="width:100%;padding:8px 11px;border:1.5px solid var(--brd);border-radius:8px;font-size:13px;outline:none;font-family:inherit;margin-bottom:10px" placeholder="Rechercher un client..." oninput="filterClients()">
+    <div id="client-picker-list"></div>
+    <button class="btn bg" style="width:100%;padding:9px;margin-top:8px;font-size:13px" onclick="document.getElementById('client-picker').classList.add('hidden')">Annuler</button>
+  </div>
+</div>
+
 <div id="import-modal" class="modal-overlay hidden">
   <div class="modal">
     <h3>🤖 Importer une réservation</h3>
@@ -225,17 +299,19 @@ if (CFG.dbUrl) { setSS('syncing','Sync...'); setTimeout(syncNow, 800); }
 // ── NAV ──
 var CV = 'list';
 function showView(v) {
-  ['list','form','drivers','voucher','accueil','settings'].forEach(function(x) {
+  ['list','form','drivers','voucher','accueil','settings','quote','clients','services'].forEach(function(x) {
     var el = document.getElementById('view-'+x); if (el) el.classList.toggle('hidden', x!==v);
   });
-  var fp = (v==='voucher'||v==='accueil');
+  var fp = (v==='voucher'||v==='accueil'||v==='quote');
   document.getElementById('main').classList.toggle('hidden', fp);
-  document.getElementById('hdr').classList.toggle('hidden', v==='accueil');
-  ['list','drivers','settings'].forEach(function(x) { var b=document.getElementById('nav-'+x); if(b) b.classList.toggle('on',x===v); });
+  document.getElementById('hdr').classList.toggle('hidden', v==='accueil'||v==='quote');
+  ['list','drivers','settings','clients','services'].forEach(function(x) { var b=document.getElementById('nav-'+x); if(b) b.classList.toggle('on',x===v); });
   CV = v;
   if (v==='list') renderList();
   if (v==='drivers') renderDrivers();
   if (v==='settings') renderSettings();
+  if (v==='clients') renderClients();
+  if (v==='services') renderServices();
 }
 function E(s) {
   if (s===null||s===undefined) return '';
@@ -277,6 +353,7 @@ function cHTML(r) {
   h += '<button class="btn bo" onclick="openVoucher(\''+r.id+'\',\'client\')">🖨 Bon client</button>';
   if (isSub) h += '<button class="btn bor" onclick="openVoucher(\''+r.id+'\',\'sub\')">📋 Bon ST</button>';
   h += '<button class="btn bcal" onclick="addToCalendar(\''+r.id+'\')">📅 Agenda</button>';
+  h += '<button class="btn bg" style="color:#0066CC;border:1.5px solid #0066CC" onclick="openQuote(\''+r.id+'\')">📋 Devis</button>';
   h += '<button class="btn bg" onclick="openForm(\''+r.id+'\')">✏️ Modifier</button>';
   h += '<button class="btn br" onclick="delConfirm(this,\''+r.id+'\')">🗑 Suppr.</button>';
   h += '</div></div>';
@@ -335,14 +412,14 @@ function buildForm(v, isEdit) {
   }
   h += '<div class="sb"><div class="sbh">VOYAGE</div><div class="sbb">';
   h += '<div class="g2"><div class="fl"><label>Date commande</label><input id="fo" value="'+E(v.orderedAt)+'"></div>';
-  h += '<div class="fl"><label>Tarif client (€)</label><input id="ff" type="number" min="0" value="'+E(v.fare)+'" placeholder="60"></div>';
+  h += '<div class="fl"><label>Tarif client (€)</label><div style="display:flex;gap:8px"><input id="ff" type="number" min="0" value="'+E(v.fare)+'" placeholder="60" style="flex:1"><button type="button" class="btn bb" style="white-space:nowrap;font-size:12px;padding:7px 11px" onclick="openServicePicker()">🗂 Services</button></div></div>';
   h += '<div class="fl"><label id="lp">Date prise en charge *</label><input id="fd" type="date" value="'+E(v.pickupDate)+'"></div>';
   h += '<div class="fl"><label>Heure</label><input id="ft2" type="time" value="'+E(v.pickupTime)+'"></div></div>';
   h += '<div class="fl"><label id="ll">Lieu de prise en charge *</label><input id="fl2" value="'+E(v.pickupLocation)+'" placeholder="ORLY Terminal 1 easyJet EJU4872"></div>';
   h += '<div class="fl"><label id="ld">Destination *</label><input id="fde" value="'+E(v.destination)+'" placeholder="Best Western Trocadero, 75016 PARIS"></div>';
   h += '</div></div>';
   h += '<div class="sb"><div class="sbh">PASSAGER</div><div class="sbb">';
-  h += '<div class="fl"><label id="ln">Nom Prénom *</label><input id="fn" value="'+E(v.passengerName)+'" placeholder="Fanny Diaz &amp; Jesus Herazo"></div>';
+  h += '<div class="fl"><label id="ln">Nom Prénom *</label><div style="display:flex;gap:8px"><input id="fn" value="'+E(v.passengerName)+'" placeholder="Fanny Diaz &amp; Jesus Herazo" style="flex:1"><button type="button" class="btn bb" style="white-space:nowrap;font-size:12px;padding:7px 11px" onclick="openClientPicker()">👥 Clients</button></div></div>';
   h += '<div class="g3"><div class="fl"><label>Téléphone</label><input id="fph" value="'+E(v.phone)+'" placeholder="+33..."></div>';
   h += '<div class="fl"><label>N° de vol</label><input id="ffl" value="'+E(v.flightNumber)+'" placeholder="EJU4872"></div>';
   h += '<div class="fl"><label>Passagers</label><select id="fps">'+buildPaxOpts(v.passengerCount)+'</select></div></div>';
@@ -634,6 +711,407 @@ function confirmImport() {
   h=h.replace('<h2 class="ft">Nouvelle réservation</h2>','<h2 class="ft">Nouvelle réservation <span style="font-size:12px;color:#2C6E12;font-weight:500">✅ Importée</span></h2>');
   document.getElementById('view-form').innerHTML=h;
   showView('form');
+}
+
+
+// ── QUOTE ──
+var quoteMode = 'fr'; // 'fr', 'en', 'both'
+
+function openQuote(id) {
+  var r = RES.find(function(x){return x.id===id;}); if(!r) return;
+  quoteMode = 'fr';
+  renderQuote(r, quoteMode);
+  document.getElementById('hdr').classList.add('hidden');
+  document.getElementById('main').classList.add('hidden');
+  ['list','form','drivers','accueil','settings','voucher'].forEach(function(v){
+    var el=document.getElementById('view-'+v); if(el) el.classList.add('hidden');
+  });
+  document.getElementById('view-quote').classList.remove('hidden');
+  CV='quote';
+}
+
+function toggleQuoteLang() {
+  var modes = ['fr','en','both'];
+  var idx = modes.indexOf(quoteMode);
+  quoteMode = modes[(idx+1) % modes.length];
+  var labels = {fr:'🌐 Voir en anglais', en:'🌐 Voir bilingue', both:'🌐 Voir en français'};
+  document.getElementById('btn-toggle-lang').textContent = labels[quoteMode];
+  var r = RES.find(function(x){return x.id === document.getElementById('qpn').dataset.id;});
+  if(r) renderQuote(r, quoteMode);
+}
+
+function shareQuote() {
+  var id = document.getElementById('qpn').dataset.id;
+  var r = RES.find(function(x){return x.id===id;}); if(!r) return;
+  var pf = r.pickupDate ? new Date(r.pickupDate).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})+' '+(r.pickupTime||'') : '';
+  var text = '=== DEVIS CRÉNOLIA ===\n'
+    + 'Client : '+r.passengerName+'\n'
+    + (r.pickupDate?'Date : '+pf+'\n':'')
+    + 'Trajet : '+(r.pickupLocation||'')+(r.destination?' → '+r.destination:'')+'\n'
+    + (r.flightNumber?'Vol : '+r.flightNumber+'\n':'')
+    + 'Passagers : '+(r.passengerCount||1)+'\n'
+    + (r.fare?'Prix : '+r.fare+' €\n':'')
+    + '\n=== QUOTATION CRENOLIA ===\n'
+    + 'Client: '+r.passengerName+'\n'
+    + (r.pickupDate?'Date: '+pf+'\n':'')
+    + 'Route: '+(r.pickupLocation||'')+(r.destination?' → '+r.destination:'')+'\n'
+    + (r.flightNumber?'Flight: '+r.flightNumber+'\n':'')
+    + 'Passengers: '+(r.passengerCount||1)+'\n'
+    + (r.fare?'Price: '+r.fare+' €\n':'')
+    + '\nCRENOLIA SAS · 07 60 00 00 45 · contact@crenolia.com · www.crenolia.com';
+  if (navigator.share) {
+    navigator.share({title:'Devis Crénolia — '+r.passengerName, text:text});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function(){
+      document.getElementById('btn-share-quote').textContent = '✓ Copié !';
+      setTimeout(function(){document.getElementById('btn-share-quote').textContent='🔗 Partager le lien';},2000);
+    });
+  }
+}
+
+function renderQuote(r, mode) {
+  var LOGO = document.getElementById('logo').src;
+  var drv = DRV.find(function(d){return d.id===r.driverId;});
+  var pf = r.pickupDate ? new Date(r.pickupDate).toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})+' '+(r.pickupTime||'') : '—';
+  var pfEn = r.pickupDate ? new Date(r.pickupDate).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+' '+(r.pickupTime||'') : '—';
+  var now = new Date();
+  var validityFr = 'Valide jusqu\'à la date de la prestation';
+  var validityEn = 'Valid until the date of service';
+  var qnum = 'DEV-'+Date.now().toString().slice(-6);
+  document.getElementById('qpn').textContent = r.passengerName;
+  document.getElementById('qpn').dataset.id = r.id;
+  document.getElementById('btn-toggle-lang').textContent = mode==='fr'?'🌐 Voir en anglais':mode==='en'?'🌐 Voir bilingue':'🌐 Voir en français';
+
+  function frBlock() {
+    var h = '<div>';
+    h += '<div class="q-badge">DEVIS N° '+qnum+'</div>';
+    h += '<div class="q-sec">CLIENT</div>';
+    h += '<table class="qtbl"><tbody>';
+    h += '<tr><td>Nom / Prénom</td><td><strong>'+E(r.passengerName||'—')+'</strong></td></tr>';
+    if(r.phone) h += '<tr><td>Téléphone</td><td>'+E(r.phone)+'</td></tr>';
+    h += '<tr><td>Passagers</td><td>'+E(r.passengerCount||1)+'</td></tr>';
+    h += '</tbody></table>';
+    h += '<div class="q-sec">PRESTATION</div>';
+    h += '<table class="qtbl"><tbody>';
+    h += '<tr><td>Date & heure</td><td><strong>'+pf+'</strong></td></tr>';
+    h += '<tr><td>Prise en charge</td><td>'+E(r.pickupLocation||'—')+'</td></tr>';
+    h += '<tr class="bld"><td>Destination</td><td>'+E(r.destination||'—')+'</td></tr>';
+    if(r.flightNumber) h += '<tr><td>N° de vol</td><td>'+E(r.flightNumber)+'</td></tr>';
+    if(drv) h += '<tr><td>Véhicule</td><td>'+E(drv.vehicle)+' ('+E(drv.plate)+')</td></tr>';
+    h += '</tbody></table>';
+    if(r.fare) {
+      h += '<div class="q-price"><div><div class="lbl">MONTANT TOTAL TTC</div></div><div class="amt">'+E(r.fare)+' €</div></div>';
+    }
+    h += '<div class="q-sec">CONDITIONS DE PAIEMENT</div>';
+    h += '<div class="q-conditions">';
+    h += '💳 Carte bancaire &nbsp;|&nbsp; 💰 Espèces &nbsp;|&nbsp; <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:12px;vertical-align:middle"> PayPal &nbsp;|&nbsp; ⚡ Stripe<br>';
+    h += 'Le paiement est dû avant ou au moment de la prestation.<br>';
+    h += '<span class="q-validity">'+validityFr+'</span>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  function enBlock() {
+    var h = '<div>';
+    h += '<div class="q-badge" style="background:#EBF4FB;color:#4A90D9">QUOTATION N° '+qnum+'</div>';
+    h += '<div class="q-sec en">CLIENT</div>';
+    h += '<table class="qtbl"><tbody>';
+    h += '<tr><td>Full name</td><td><strong>'+E(r.passengerName||'—')+'</strong></td></tr>';
+    if(r.phone) h += '<tr><td>Phone</td><td>'+E(r.phone)+'</td></tr>';
+    h += '<tr><td>Passengers</td><td>'+E(r.passengerCount||1)+'</td></tr>';
+    h += '</tbody></table>';
+    h += '<div class="q-sec en">SERVICE DETAILS</div>';
+    h += '<table class="qtbl"><tbody>';
+    h += '<tr><td>Date & time</td><td><strong>'+pfEn+'</strong></td></tr>';
+    h += '<tr><td>Pick-up</td><td>'+E(r.pickupLocation||'—')+'</td></tr>';
+    h += '<tr class="bld"><td>Drop-off</td><td>'+E(r.destination||'—')+'</td></tr>';
+    if(r.flightNumber) h += '<tr><td>Flight number</td><td>'+E(r.flightNumber)+'</td></tr>';
+    if(drv) h += '<tr><td>Vehicle</td><td>'+E(drv.vehicle)+' ('+E(drv.plate)+')</td></tr>';
+    h += '</tbody></table>';
+    if(r.fare) {
+      h += '<div class="q-price" style="border-color:#4A90D9;background:#EBF4FB"><div><div class="lbl">TOTAL AMOUNT (VAT incl.)</div></div><div class="amt" style="color:#4A90D9">'+E(r.fare)+' €</div></div>';
+    }
+    h += '<div class="q-sec en">PAYMENT CONDITIONS</div>';
+    h += '<div class="q-conditions">';
+    h += '💳 Credit/Debit card &nbsp;|&nbsp; 💰 Cash &nbsp;|&nbsp; <img src="https://www.paypalobjects.com/webstatic/icon/pp258.png" style="height:12px;vertical-align:middle"> PayPal &nbsp;|&nbsp; ⚡ Stripe<br>';
+    h += 'Payment is due before or at the time of service.<br>';
+    h += '<span class="q-validity">'+validityEn+'</span>';
+    h += '</div>';
+    h += '</div>';
+    return h;
+  }
+
+  var body = '';
+  if (mode === 'fr') {
+    body = frBlock();
+  } else if (mode === 'en') {
+    body = enBlock();
+  } else {
+    // BOTH: two columns side by side
+    body = '<div class="ql"><div class="ql-fr">'+frBlock()+'</div><div class="ql-en">'+enBlock()+'</div></div>';
+  }
+
+  var footer = '<div class="q-footer"><img src="'+LOGO+'" alt="Crénolia">'
+    +'<div class="q-footer-txt">CRENOLIA SAS, SOCIÉTÉ DE SERVICE VTC À PARIS<br>'
+    +'ENREGISTRÉE AU NUMÉRO EVTC094190272 · TVA : FR77849200910 · SIREN : 849 200 910 00024<br>'
+    +'07 60 00 00 45 · contact@crenolia.com · www.crenolia.com</div></div>';
+
+  document.getElementById('qdoc').innerHTML = '<div style="text-align:center;margin-bottom:16px"><img src="'+LOGO+'" style="height:46px;width:auto"></div>'
+    + body + footer;
+}
+
+
+// ── CLIENTS DATA ──
+var CLI = [];
+function loadClients() { try { var c=localStorage.getItem('cren-cli'); if(c) CLI=JSON.parse(c); } catch(e){} }
+function saveClients() { localStorage.setItem('cren-cli',JSON.stringify(CLI)); }
+loadClients();
+
+// ── SERVICES DATA ──
+var SVC = [
+  {id:'s1', name:'CDG → Paris / Paris → CDG', price:'60', updatedAt:'0'},
+  {id:'s2', name:'Orly → Paris / Paris → Orly', price:'55', updatedAt:'0'},
+  {id:'s3', name:'Gare du Nord ⇄ Paris', price:'40', updatedAt:'0'},
+  {id:'s4', name:'Paris → Disneyland', price:'90', updatedAt:'0'},
+  {id:'s5', name:'Paris → Versailles', price:'55', updatedAt:'0'}
+];
+function loadServices() { try { var s=localStorage.getItem('cren-svc'); if(s) SVC=JSON.parse(s); } catch(e){} }
+function saveServices() { localStorage.setItem('cren-svc',JSON.stringify(SVC)); }
+loadServices();
+
+// Push clients & services with data sync
+var _origPushData = pushData;
+pushData = function() {
+  saveClients(); saveServices();
+  if (!CFG.dbUrl) return;
+  fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reservations:RES, drivers:DRV, clients:CLI, services:SVC, at:new Date().toISOString()})
+  })
+  .then(function() { var t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); setSS('ok','OK '+t); })
+  .catch(function() { setSS('err','Erreur'); });
+};
+
+// Patch syncNow to also sync clients/services
+var _origSyncNow = syncNow;
+syncNow = function() {
+  if (!CFG.dbUrl) { showView('settings'); return; }
+  setSS('syncing', 'Sync...');
+  fetch(fbUrl())
+    .then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(remote) {
+      if (remote) {
+        function merge(a,b) { var m={}; (a||[]).concat(b||[]).forEach(function(x){if(!m[x.id]||(x.updatedAt||'')>(m[x.id].updatedAt||''))m[x.id]=x;}); return Object.values(m); }
+        RES = merge(RES, remote.reservations||[]);
+        DRV = merge(DRV, remote.drivers||[]);
+        CLI = merge(CLI, remote.clients||[]);
+        if (remote.services && remote.services.length) SVC = merge(SVC, remote.services);
+        saveLocal(); saveClients(); saveServices();
+      }
+      return fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({reservations:RES, drivers:DRV, clients:CLI, services:SVC, at:new Date().toISOString()})});
+    })
+    .then(function() {
+      var t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      setSS('ok','OK '+t);
+      if(CV==='list')renderList(); if(CV==='drivers')renderDrivers();
+      if(CV==='clients')renderClients(); if(CV==='services')renderServices();
+    })
+    .catch(function(e){setSS('err','Erreur sync');console.error(e);});
+};
+
+// ── CLIENTS VIEW ──
+function renderClients() {
+  var el = document.getElementById('view-clients');
+  var list = '';
+  CLI.forEach(function(c) {
+    var lang = c.lang ? '<span class="cs-lang'+(c.lang==='en'?' en':'')+'">'+(c.lang==='en'?'EN':'FR')+'</span>' : '';
+    list += '<div class="cs-card">'
+      +'<div class="cs-main">'
+      +'<div class="cs-name">'+E(c.name)+lang+'</div>'
+      +'<div class="cs-sub">'+(c.phone?'📞 '+E(c.phone):'')+(c.email?' · ✉️ '+E(c.email):'')+'</div>'
+      +(c.address?'<div class="cs-sub">📍 '+E(c.address)+'</div>':'')
+      +(c.notes?'<div class="cs-note">💬 '+E(c.notes)+'</div>':'')
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0">'
+      +'<button class="btn bb" style="font-size:11px;padding:5px 10px" onclick="newReservationFromClient(\''+c.id+'\')">+ Réservation</button>'
+      +'<button class="btn bg" style="font-size:11px;padding:5px 10px" onclick="editClient(\''+c.id+'\')">✏️ Modifier</button>'
+      +'<button class="btn br" style="font-size:11px;padding:5px 10px" onclick="deleteClient(\''+c.id+'\')">🗑</button>'
+      +'</div></div>';
+  });
+  if (!CLI.length) list = '<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:40px;margin-bottom:12px">👥</div><p>Aucun client enregistré</p></div>';
+  el.innerHTML = '<div style="max-width:700px;margin:0 auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'
+    +'<h2 style="font-size:19px;font-weight:700;color:#0E3460">Clients</h2>'
+    +'<button class="btn bb" onclick="editClient(null)">+ Ajouter</button></div>'
+    +'<div id="client-form-inline" class="hidden"></div>'
+    + list + '</div>';
+}
+
+function editClient(id) {
+  var c = id ? CLI.find(function(x){return x.id===id;}) : null;
+  var v = c || {name:'',phone:'',email:'',address:'',lang:'fr',notes:''};
+  var h = '<div style="background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:12px;padding:18px;margin-bottom:16px">'
+    +'<div class="g2">'
+    +'<div class="fl"><label>Nom Prénom *</label><input id="cli-name" value="'+E(v.name)+'" placeholder="Karen Digby"></div>'
+    +'<div class="fl"><label>Téléphone</label><input id="cli-phone" value="'+E(v.phone)+'" placeholder="+44..."></div>'
+    +'<div class="fl"><label>Email</label><input id="cli-email" value="'+E(v.email)+'" placeholder="karen@email.com"></div>'
+    +'<div class="fl"><label>Langue préférée</label>'
+    +'<select id="cli-lang"><option value="fr"'+(v.lang==='fr'?' selected':'')+'>Français</option>'
+    +'<option value="en"'+(v.lang==='en'?' selected':'')+'>English</option></select></div>'
+    +'</div>'
+    +'<div class="fl"><label>Adresse habituelle</label><input id="cli-addr" value="'+E(v.address)+'" placeholder="Hôtel Marriott, 75001 Paris"></div>'
+    +'<div class="fl"><label>Notes perso</label><input id="cli-notes" value="'+E(v.notes)+'" placeholder="Client régulier, préfère le silence..."></div>'
+    +'<div style="display:flex;gap:8px;margin-top:6px">'
+    +'<button class="btn bb" onclick="saveClient(\''+( id||'')+'\')">✓ Enregistrer</button>'
+    +'<button class="btn bg" onclick="document.getElementById(\'client-form-inline\').classList.add(\'hidden\')">Annuler</button>'
+    +'</div></div>';
+  var el = document.getElementById('client-form-inline');
+  el.innerHTML = h; el.classList.remove('hidden');
+  el.scrollIntoView({behavior:'smooth'});
+}
+
+function saveClient(id) {
+  var name = gv('cli-name'); if(!name){alert('Le nom est obligatoire');return;}
+  var c = {
+    id: id||Date.now().toString(), updatedAt:new Date().toISOString(),
+    name:name, phone:gv('cli-phone'), email:gv('cli-email'),
+    address:gv('cli-addr'), notes:gv('cli-notes'),
+    lang:document.getElementById('cli-lang').value
+  };
+  if(id){CLI=CLI.map(function(x){return x.id===id?c:x;});}else{CLI.unshift(c);}
+  saveClients(); pushData(); renderClients();
+}
+
+function deleteClient(id) {
+  if(!confirm('Supprimer ce client ?'))return;
+  CLI=CLI.filter(function(c){return c.id!==id;}); saveClients(); pushData(); renderClients();
+}
+
+function newReservationFromClient(id) {
+  var c = CLI.find(function(x){return x.id===id;}); if(!c)return;
+  EID=null;
+  var now=new Date();
+  var v={
+    orderedAt:now.toLocaleDateString('fr-FR')+' '+now.toTimeString().slice(0,5),
+    pickupDate:now.toISOString().split('T')[0], pickupTime:'',
+    pickupLocation:c.address||'', destination:'', fare:'', flightNumber:'',
+    passengerName:c.name, phone:c.phone, passengerCount:'2',
+    driverId:DRV[0]?DRV[0].id:'',
+    isSubcontracted:false, subcontractorName:'', subcontractorFare:'', subcontractorNote:''
+  };
+  document.getElementById('view-form').innerHTML = buildForm(v, false);
+  showView('form');
+}
+
+// ── CLIENT PICKER (in form) ──
+function openClientPicker() {
+  filterClients();
+  document.getElementById('client-picker').classList.remove('hidden');
+  document.getElementById('client-search').value='';
+  filterClients();
+}
+
+function filterClients() {
+  var q=(document.getElementById('client-search').value||'').toLowerCase();
+  var filtered=CLI.filter(function(c){return !q||c.name.toLowerCase().includes(q)||(c.phone&&c.phone.includes(q));});
+  var h='';
+  if(!filtered.length) h='<p style="text-align:center;color:#aaa;padding:16px;font-size:13px">Aucun client trouvé</p>';
+  filtered.forEach(function(c){
+    h+='<div class="cs-card clickable" onclick="pickClient(\''+c.id+'\')">'
+      +'<div class="cs-main"><div class="cs-name">'+E(c.name)+'</div>'
+      +'<div class="cs-sub">'+(c.phone?'📞 '+E(c.phone):'')+(c.email?' · '+E(c.email):'')+'</div>'
+      +(c.address?'<div class="cs-sub" style="font-size:11px">📍 '+E(c.address)+'</div>':'')
+      +'</div><div style="color:var(--blue);font-size:18px">›</div></div>';
+  });
+  document.getElementById('client-picker-list').innerHTML = h;
+}
+
+function pickClient(id) {
+  var c=CLI.find(function(x){return x.id===id;}); if(!c)return;
+  var fn=document.getElementById('fn'); if(fn) fn.value=c.name;
+  var fph=document.getElementById('fph'); if(fph) fph.value=c.phone||'';
+  document.getElementById('client-picker').classList.add('hidden');
+}
+
+// ── SERVICES VIEW ──
+function renderServices() {
+  var el = document.getElementById('view-services');
+  var list='';
+  SVC.forEach(function(s){
+    list+='<div class="cs-card">'
+      +'<div class="cs-main"><div class="cs-name">'+E(s.name)+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<div class="cs-price">'+E(s.price)+' €</div>'
+      +'<button class="btn bg" style="font-size:11px;padding:5px 10px" onclick="editService(\''+s.id+'\')">✏️</button>'
+      +'<button class="btn br" style="font-size:11px;padding:5px 10px" onclick="deleteService(\''+s.id+'\')">🗑</button>'
+      +'</div></div>';
+  });
+  if(!SVC.length) list='<div style="text-align:center;padding:40px;color:#aaa"><div style="font-size:40px;margin-bottom:12px">🗂</div><p>Aucun service enregistré</p></div>';
+  el.innerHTML='<div style="max-width:700px;margin:0 auto">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'
+    +'<h2 style="font-size:19px;font-weight:700;color:#0E3460">Services & Tarifs</h2>'
+    +'<button class="btn bb" onclick="editService(null)">+ Ajouter</button></div>'
+    +'<div id="svc-form-inline" class="hidden"></div>'
+    + list+'</div>';
+}
+
+function editService(id) {
+  var s=id?SVC.find(function(x){return x.id===id;}):null;
+  var v=s||{name:'',price:''};
+  var h='<div style="background:var(--wh);border:1.5px solid var(--blue-brd);border-radius:12px;padding:18px;margin-bottom:14px">'
+    +'<div class="g2">'
+    +'<div class="fl"><label>Nom du service *</label><input id="svc-name" value="'+E(v.name)+'" placeholder="CDG → Paris"></div>'
+    +'<div class="fl"><label>Prix (€)</label><input id="svc-price" type="number" min="0" value="'+E(v.price)+'" placeholder="60"></div>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px;margin-top:4px">'
+    +'<button class="btn bb" onclick="saveService(\''+( id||'')+'\')">✓ Enregistrer</button>'
+    +'<button class="btn bg" onclick="document.getElementById(\'svc-form-inline\').classList.add(\'hidden\')">Annuler</button>'
+    +'</div></div>';
+  var el=document.getElementById('svc-form-inline');
+  el.innerHTML=h; el.classList.remove('hidden');
+  el.scrollIntoView({behavior:'smooth'});
+}
+
+function saveService(id){
+  var name=gv('svc-name'); if(!name){alert('Le nom est obligatoire');return;}
+  var s={id:id||Date.now().toString(),updatedAt:new Date().toISOString(),name:name,price:gv('svc-price')};
+  if(id){SVC=SVC.map(function(x){return x.id===id?s:x;});}else{SVC.unshift(s);}
+  saveServices();pushData();renderServices();
+}
+
+function deleteService(id){
+  if(!confirm('Supprimer ce service ?'))return;
+  SVC=SVC.filter(function(s){return s.id!==id;});saveServices();pushData();renderServices();
+}
+
+// ── SERVICE PICKER (in form) ──
+function openServicePicker() {
+  var h='<div class="svc-picker"><h4>🗂 Choisir un service</h4>';
+  SVC.forEach(function(s){
+    h+='<div class="svc-item" onclick="pickService(\''+s.id+'\')">'
+      +'<span class="svc-item-name">'+E(s.name)+'</span>'
+      +'<span class="svc-item-price">'+E(s.price)+' €</span></div>';
+  });
+  if(!SVC.length) h+='<p style="font-size:12px;color:#aaa;text-align:center;padding:10px">Aucun service — ajoutez-en dans "🗂 Services"</p>';
+  h+='</div>';
+  // Show as inline dropdown under the fare field
+  var existing=document.getElementById('svc-dropdown');
+  if(existing){existing.remove();return;}
+  var drop=document.createElement('div');
+  drop.id='svc-dropdown';
+  drop.innerHTML=h;
+  drop.style.cssText='position:relative;z-index:50;margin-top:-8px;margin-bottom:8px';
+  var ffEl=document.getElementById('ff');
+  if(ffEl&&ffEl.parentNode&&ffEl.parentNode.parentNode){
+    ffEl.parentNode.parentNode.appendChild(drop);
+  }
+}
+
+function pickService(id){
+  var s=SVC.find(function(x){return x.id===id;}); if(!s)return;
+  var ff=document.getElementById('ff'); if(ff) ff.value=s.price;
+  var drop=document.getElementById('svc-dropdown'); if(drop)drop.remove();
 }
 
 setImportTab('email');
