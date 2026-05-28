@@ -248,6 +248,16 @@ function loadLocal() {
     if (r) RES = JSON.parse(r); if (d) DRV = JSON.parse(d);
   } catch(e) {}
 }
+function migrateSvcNames() {
+  var changed = false;
+  SVC = SVC.map(function(s) {
+    var n = s.name;
+    if (n.indexOf('1-3 PAX') !== -1) { n = n.replace('1-3 PAX','Berline'); changed = true; }
+    if (n.indexOf('4-7 PAX') !== -1) { n = n.replace('4-7 PAX','Van'); changed = true; }
+    return changed ? Object.assign({}, s, {name: n, updatedAt: new Date().toISOString()}) : s;
+  });
+  if (changed) saveServices();
+}
 function saveLocal() {
   localStorage.setItem('cren-res', JSON.stringify(RES));
   localStorage.setItem('cren-drv', JSON.stringify(DRV));
@@ -309,6 +319,56 @@ function forcePull() {
       if(CV==='services')renderServices();
     })
     .catch(function(e){ setSS('err','Erreur'); console.error(e); });
+}
+
+function resetLocalData() {
+  if (!confirm('Effacer toutes les données locales (réservations, clients, services, chauffeurs) ?\nAttention : sans Firebase connecté, ces données seront perdues définitivement.')) return;
+  localStorage.removeItem('cren-res');
+  localStorage.removeItem('cren-drv');
+  localStorage.removeItem('cren-cli');
+  localStorage.removeItem('cren-svc');
+  localStorage.removeItem('cren-cfg');
+  RES = []; CLI = [];
+  DRV = [{id:'d1', name:'Lucnor LAROCHEL', vehicle:'Tesla Model Y', plate:'GK-580-RX', updatedAt:'0'}];
+  SVC = [
+    {id:'s1',  name:'CDG → Paris — Berline',             category:'Transfert', price:'65',  updatedAt:'0'},
+    {id:'s2',  name:'CDG → Paris — Van',                 category:'Transfert', price:'120', updatedAt:'0'},
+    {id:'s3',  name:'Paris → CDG — Berline',             category:'Transfert', price:'60',  updatedAt:'0'},
+    {id:'s4',  name:'Paris → CDG — Van',                 category:'Transfert', price:'120', updatedAt:'0'},
+    {id:'s5',  name:'Orly → Paris — Berline',            category:'Transfert', price:'60',  updatedAt:'0'},
+    {id:'s6',  name:'Orly → Paris — Van',                category:'Transfert', price:'110', updatedAt:'0'},
+    {id:'s7',  name:'Paris → Orly — Berline',            category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s8',  name:'Paris → Orly — Van',                category:'Transfert', price:'110', updatedAt:'0'},
+    {id:'s9',  name:'Gares Parisiennes ↔ Paris — Berline',category:'Transfert', price:'40',  updatedAt:'0'},
+    {id:'s10', name:'Gares Parisiennes ↔ Paris — Van',    category:'Transfert', price:'80',  updatedAt:'0'},
+    {id:'s11', name:'Paris → Disneyland — Berline',       category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s12', name:'Paris → Disneyland — Van',           category:'Transfert', price:'150', updatedAt:'0'},
+    {id:'s13', name:'Disneyland → Paris — Berline',       category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s14', name:'Disneyland → Paris — Van',           category:'Transfert', price:'150', updatedAt:'0'},
+    {id:'s15', name:'Paris → Versailles — Berline',       category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s16', name:'Paris → Versailles — Van',           category:'Transfert', price:'140', updatedAt:'0'},
+    {id:'s17', name:'Versailles → Paris — Berline',       category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s18', name:'Versailles → Paris — Van',           category:'Transfert', price:'140', updatedAt:'0'},
+    {id:'s19', name:'Connexion CDG ↔ Orly — Berline',     category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s20', name:'Connexion CDG ↔ Orly — Van',         category:'Transfert', price:'160', updatedAt:'0'},
+    {id:'s21', name:'Mise à disposition 1H — Berline',    category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s22', name:'Mise à disposition 1H — Van',        category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s23', name:'Mise à disposition 2H — Berline',    category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s24', name:'Mise à disposition 2H — Van',        category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s25', name:'Mise à disposition 3H — Berline',    category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s26', name:'Mise à disposition 3H — Van',        category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s27', name:'Mise à disposition 4H — Berline',    category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s28', name:'Mise à disposition 4H — Van',        category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s29', name:'Mise à disposition 5H — Berline',    category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s30', name:'Mise à disposition 5H — Van',        category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s31', name:'Paris by Night 2H — Berline',             category:'Mise à disposition', price:'', updatedAt:'0'},
+    {id:'s32', name:'Paris by Night 2H — Van',                 category:'Mise à disposition', price:'', updatedAt:'0'}
+  ];
+  saveLocal(); saveClients(); saveServices();
+  setSS('off', 'Non configuré');
+  showView('settings');
+  renderSettings();
+  alert('Cache local vidé. Reconnectez Firebase et cliquez "Forcer import" pour récupérer vos données.');
 }
 
 function pushData() {
@@ -641,6 +701,11 @@ function renderSettings() {
       +'<button class="btn bb" style="font-size:13px;padding:8px 16px" onclick="syncNow()">&#x1F504; Synchroniser</button>'
       +'<button class="btn bg" style="font-size:13px;padding:8px 16px;color:#E67E22;border:1.5px solid #E67E22" onclick="forcePull()">&#x2B07; Forcer import</button>'
       +'<button class="btn bg" style="font-size:13px;padding:8px 16px" onclick="disconnectSync()">Déconnecter</button>'
+      +'</div>'
+      +'<div style="margin-top:12px;padding-top:12px;border-top:1px solid #EEF3F8">'
+      +'<button class="btn bg" style="font-size:12px;padding:7px 14px;color:var(--red);border:1.5px solid var(--red)" onclick="clearLocalData()">&#x1F5D1; Vider le cache local</button>'
+      +'<span style="font-size:11px;color:var(--muted);margin-left:10px">Si les données affichées sont obsolètes</span>'
+      +'<button class="btn bg" style="font-size:13px;padding:8px 16px;color:var(--red);border:1.5px solid var(--red)" onclick="clearLocalData()">&#x1F5D1; Vider cache local</button>'
       +'</div></div>'
     :'<div class="sbox2"><p style="font-size:13px;font-weight:700;color:#0E3460;margin-bottom:12px">🔥 Connexion Firebase (Google)</p>'
       +'<ol style="list-style:decimal;padding-left:18px;margin-bottom:14px;font-size:13px;line-height:2">'
@@ -658,6 +723,13 @@ function renderSettings() {
     +'<p style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Firebase (Google) synchronise vos données en temps réel entre téléphone, tablette et PC.</p>'
     +inner
     +'<div class="tip" style="margin-top:14px">💡 La même URL Firebase sur tous vos appareils suffit. Gratuit jusqu\'à 1 Go et 10 000 connexions/jour.</div>'
+    +'<div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--blue-brd)">'
+    +'<p style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px">&#9888; Zone de maintenance</p>'
+    +'<p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Si vos données locales sont désynchronisées ou corrompues, vous pouvez les effacer et les recharger depuis Firebase.</p>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+    +'<button class="btn" style="background:#FEF0EF;color:var(--red);border:1.5px solid #F5C6C2;font-size:12px;padding:8px 14px" onclick="resetLocalData()">&#128465; Vider le cache local</button>'
+    +'<button class="btn" style="background:#FFF5E6;color:#7A4800;border:1.5px solid #FFD699;font-size:12px;padding:8px 14px" onclick="forcePull()">&#x2B07; Forcer import Firebase</button>'
+    +'</div></div>'
     +'</div>';
 }
 function connectFirebase() {
@@ -669,6 +741,60 @@ function connectFirebase() {
 function disconnectSync(){
   if(!confirm('Déconnecter Firebase ?'))return;
   CFG={dbUrl:''};saveCfg();setSS('off','Non configuré');renderSettings();
+}
+
+function clearLocalData(){
+  if(!confirm('Vider toutes les données locales de cet appareil ?\nLes données Firebase ne seront pas supprimées.\nVous devrez reconnecter Firebase ensuite.'))return;
+  localStorage.clear();
+  RES=[]; DRV=[{id:'d1',name:'Lucnor LAROCHEL',vehicle:'Tesla Model Y',plate:'GK-580-RX',updatedAt:'0'}];
+  CLI=[]; 
+  SVC=[
+    {id:'s1',  name:'CDG \u2192 Paris \u2014 Berline',             category:'Transfert', price:'65',  updatedAt:'0'},
+    {id:'s2',  name:'CDG \u2192 Paris \u2014 Van',                 category:'Transfert', price:'120', updatedAt:'0'},
+    {id:'s3',  name:'Paris \u2192 CDG \u2014 Berline',             category:'Transfert', price:'60',  updatedAt:'0'},
+    {id:'s4',  name:'Paris \u2192 CDG \u2014 Van',                 category:'Transfert', price:'120', updatedAt:'0'},
+    {id:'s5',  name:'Orly \u2192 Paris \u2014 Berline',            category:'Transfert', price:'60',  updatedAt:'0'},
+    {id:'s6',  name:'Orly \u2192 Paris \u2014 Van',                category:'Transfert', price:'110', updatedAt:'0'},
+    {id:'s7',  name:'Paris \u2192 Orly \u2014 Berline',            category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s8',  name:'Paris \u2192 Orly \u2014 Van',                category:'Transfert', price:'110', updatedAt:'0'},
+    {id:'s9',  name:'Gares Parisiennes \u2194 Paris \u2014 Berline',category:'Transfert', price:'40', updatedAt:'0'},
+    {id:'s10', name:'Gares Parisiennes \u2194 Paris \u2014 Van',    category:'Transfert', price:'80', updatedAt:'0'},
+    {id:'s11', name:'Paris \u2192 Disneyland \u2014 Berline',      category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s12', name:'Paris \u2192 Disneyland \u2014 Van',          category:'Transfert', price:'150', updatedAt:'0'},
+    {id:'s13', name:'Disneyland \u2192 Paris \u2014 Berline',      category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s14', name:'Disneyland \u2192 Paris \u2014 Van',          category:'Transfert', price:'150', updatedAt:'0'},
+    {id:'s15', name:'Paris \u2192 Versailles \u2014 Berline',      category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s16', name:'Paris \u2192 Versailles \u2014 Van',          category:'Transfert', price:'140', updatedAt:'0'},
+    {id:'s17', name:'Versailles \u2192 Paris \u2014 Berline',      category:'Transfert', price:'55',  updatedAt:'0'},
+    {id:'s18', name:'Versailles \u2192 Paris \u2014 Van',          category:'Transfert', price:'140', updatedAt:'0'},
+    {id:'s19', name:'Connexion CDG \u2194 Orly \u2014 Berline',    category:'Transfert', price:'90',  updatedAt:'0'},
+    {id:'s20', name:'Connexion CDG \u2194 Orly \u2014 Van',        category:'Transfert', price:'160', updatedAt:'0'},
+    {id:'s21', name:'Mise \u00e0 disposition 1H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s22', name:'Mise \u00e0 disposition 1H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s23', name:'Mise \u00e0 disposition 2H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s24', name:'Mise \u00e0 disposition 2H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s25', name:'Mise \u00e0 disposition 3H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s26', name:'Mise \u00e0 disposition 3H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s27', name:'Mise \u00e0 disposition 4H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s28', name:'Mise \u00e0 disposition 4H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s29', name:'Mise \u00e0 disposition 5H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s30', name:'Mise \u00e0 disposition 5H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s31', name:'Paris by Night 2H \u2014 Berline',             category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
+    {id:'s32', name:'Paris by Night 2H \u2014 Van',                 category:'Mise \u00e0 disposition', price:'', updatedAt:'0'}
+  ];
+  setSS('off','Non configuré');
+  renderSettings();
+  alert('Cache vidé. Reconnectez Firebase dans ⚙️ Sync puis cliquez "Forcer import".');
+}
+function clearLocalData(){
+  if(!confirm('Effacer toutes les données locales et recharger depuis Firebase ?\nAttention : les modifications non synchronisées seront perdues.'))return;
+  localStorage.removeItem('cren-res');
+  localStorage.removeItem('cren-drv');
+  localStorage.removeItem('cren-cli');
+  localStorage.removeItem('cren-svc');
+  RES=[]; DRV=[{id:'d1',name:'Lucnor LAROCHEL',vehicle:'Tesla Model Y',plate:'GK-580-RX',updatedAt:'0'}];
+  CLI=[]; loadServices();
+  if(CFG.dbUrl){ forcePull(); } else { renderList(); }
 }
 
 // ── IMPORT IA ──
@@ -958,6 +1084,7 @@ var SVC = [
 function loadServices() { try { var s=localStorage.getItem('cren-svc'); if(s) SVC=JSON.parse(s); } catch(e){} }
 function saveServices() { localStorage.setItem('cren-svc',JSON.stringify(SVC)); }
 loadServices();
+migrateSvcNames();
 
 // Push clients & services with data sync
 var _origPushData = pushData;
