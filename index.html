@@ -287,6 +287,30 @@ function syncNow() {
     })
     .catch(function(e) { setSS('err', 'Erreur sync'); console.error(e); });
 }
+function forcePull() {
+  if (!CFG.dbUrl) return;
+  if (!confirm('Importer toutes les données depuis Firebase ? Les données locales seront remplacées.')) return;
+  setSS('syncing', 'Import...');
+  fetch(fbUrl())
+    .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(remote){
+      if (remote) {
+        if (Array.isArray(remote.reservations)) RES = remote.reservations;
+        if (Array.isArray(remote.drivers))      DRV = remote.drivers;
+        if (Array.isArray(remote.clients))      CLI = remote.clients;
+        if (Array.isArray(remote.services) && remote.services.length) SVC = remote.services;
+        saveLocal(); saveClients(); saveServices();
+      }
+      var t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+      setSS('ok','OK '+t);
+      if(CV==='list')renderList();
+      if(CV==='drivers')renderDrivers();
+      if(CV==='clients')renderClients();
+      if(CV==='services')renderServices();
+    })
+    .catch(function(e){ setSS('err','Erreur'); console.error(e); });
+}
+
 function pushData() {
   if (!CFG.dbUrl) return;
   fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({reservations:RES, drivers:DRV, at:new Date().toISOString()})})
@@ -614,7 +638,8 @@ function renderSettings() {
     ?'<div class="ok-box"><div style="font-weight:700;color:#2C6E12;margin-bottom:8px">✅ Firebase connecté</div>'
       +'<div style="font-size:12px;color:#2C6E12;line-height:1.8;word-break:break-all">URL : <code style="background:rgba(0,0,0,.06);padding:1px 5px;border-radius:3px;font-size:10px">'+E(CFG.dbUrl)+'</code></div>'
       +'<div style="display:flex;gap:8px;margin-top:12px">'
-      +'<button class="btn bb" style="font-size:13px;padding:8px 16px" onclick="syncNow()">🔄 Synchroniser</button>'
+      +'<button class="btn bb" style="font-size:13px;padding:8px 16px" onclick="syncNow()">&#x1F504; Synchroniser</button>'
+      +'<button class="btn bg" style="font-size:13px;padding:8px 16px;color:#E67E22;border:1.5px solid #E67E22" onclick="forcePull()">&#x2B07; Forcer import</button>'
       +'<button class="btn bg" style="font-size:13px;padding:8px 16px" onclick="disconnectSync()">Déconnecter</button>'
       +'</div></div>'
     :'<div class="sbox2"><p style="font-size:13px;font-weight:700;color:#0E3460;margin-bottom:12px">🔥 Connexion Firebase (Google)</p>'
@@ -1123,12 +1148,45 @@ function renderServices() {
   el.innerHTML='<div style="max-width:700px;margin:0 auto">'
     +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">'
     +'<h2 style="font-size:19px;font-weight:700;color:#0E3460">Services & Tarifs</h2>'
-    +'<button class="btn bb" onclick="editService(null)">+ Ajouter</button></div>'
+    +'<button class="btn bb" onclick="openSvcModal(null)">+ Ajouter</button></div>'
     
     + list+'</div>';
 }
 
 function editService(id) { openSvcModal(id); }
+
+function openSvcModal(id) {
+  var s = id ? SVC.find(function(x){return x.id===id;}) : null;
+  var v = s || {name:'', category:'Transfert', price:''};
+  var cats = ['Transfert','Mise à disposition'];
+  var catOpts = cats.map(function(c){
+    return '<option value="'+c+'"'+(v.category===c?' selected':'')+'>'+c+'</option>';
+  }).join('');
+  var existing = document.getElementById('svc-modal-overlay');
+  if (existing) existing.remove();
+  var overlay = document.createElement('div');
+  overlay.id = 'svc-modal-overlay';
+  overlay.dataset.editId = id || '';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px';
+  overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+  var h = '<div style="background:#fff;border-radius:14px;padding:22px;max-width:460px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.2)" onclick="event.stopPropagation()">'
+    +'<h3 style="font-size:16px;font-weight:700;color:#0E3460;margin-bottom:16px">'+(id?'Modifier le service':'Nouveau service')+'</h3>'
+    +'<div class="fl"><label>Nom du service *</label><input id="svcm-name" value="'+E(v.name)+'" placeholder="Ex: CDG &#x2192; Paris &#x2014; Berline"></div>'
+    +'<div class="g2">'
+    +'<div class="fl"><label>Catégorie</label><select id="svcm-cat">'+catOpts+'</select></div>'
+    +'<div class="fl"><label>Prix (€)</label><input id="svcm-price" type="number" min="0" value="'+E(v.price||'')+'" placeholder="60"></div>'
+    +'</div>'
+    +'<div style="background:#F3F7FC;border-radius:8px;padding:9px 12px;font-size:12px;color:#7A97B5;margin-bottom:14px;line-height:1.6">'
+    +'&#x1F4A1; Ajoutez <strong>&#x2014; Berline</strong> ou <strong>&#x2014; Van</strong> à la fin du nom.'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn bb" style="flex:1;padding:11px;font-size:14px" onclick="saveSvcModal()">&#x2713; Enregistrer</button>'
+    +'<button class="btn bg" style="padding:11px 18px;font-size:14px" onclick="document.getElementById(&quot;svc-modal-overlay&quot;).remove()">Annuler</button>'
+    +'</div></div>';
+  overlay.innerHTML = h;
+  document.body.appendChild(overlay);
+  setTimeout(function(){ var el=document.getElementById('svcm-name'); if(el)el.focus(); }, 100);
+}
 
 function saveSvcModal(){
   var overlay = document.getElementById('svc-modal-overlay');
