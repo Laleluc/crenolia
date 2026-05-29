@@ -271,31 +271,45 @@ function setSS(state, lbl) {
   d.className = 'sdot' + (state === 'syncing' ? ' spinning' : '');
 }
 function fbUrl() { return (CFG.dbUrl || '').replace(/\/+$/, '') + '/crenolia.json'; }
-function syncNow() {
-  if (!CFG.dbUrl) { showView('settings'); return; }
-  setSS('syncing', 'Sync...');
-  fetch(fbUrl())
+// Applique un instantané distant en local (Firebase = source de vérité)
+function applyRemote(remote) {
+  if (!remote) return false;
+  if (Array.isArray(remote.reservations)) RES = remote.reservations;
+  if (Array.isArray(remote.drivers) && remote.drivers.length) DRV = remote.drivers;
+  if (Array.isArray(remote.clients))  CLI = remote.clients;
+  if (Array.isArray(remote.services) && remote.services.length) SVC = remote.services;
+  saveLocal(); saveClients(); saveServices();
+  return true;
+}
+// Rafraîchit la vue courante
+function renderCurrent() {
+  if (CV === 'list') renderList();
+  else if (CV === 'drivers') renderDrivers();
+  else if (CV === 'clients') renderClients();
+  else if (CV === 'services') renderServices();
+}
+// PULL : récupère Firebase et remplace le local. Ne repousse JAMAIS.
+function pullData(silent) {
+  if (!CFG.dbUrl) return Promise.resolve();
+  if (!silent) setSS('syncing', 'Sync...');
+  return fetch(fbUrl())
     .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function(remote) {
-      if (remote) {
-        function merge(a, b) {
-          var m = {};
-          (a||[]).concat(b||[]).forEach(function(x) { if (!m[x.id] || (x.updatedAt||'') > (m[x.id].updatedAt||'')) m[x.id] = x; });
-          return Object.values(m);
-        }
-        RES = merge(RES, remote.reservations || []);
-        DRV = merge(DRV, remote.drivers || []);
-        saveLocal();
+      if (remote && (remote.reservations || remote.drivers || remote.clients || remote.services)) {
+        applyRemote(remote); renderCurrent();
+        var t = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+        setSS('ok', 'OK ' + t);
+      } else {
+        // Firebase vide → on l'initialise une fois avec les données locales
+        pushData();
       }
-      return fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({reservations:RES, drivers:DRV, at:new Date().toISOString()})});
     })
-    .then(function() {
-      var t = new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-      setSS('ok', 'OK ' + t);
-      if (CV === 'list') renderList();
-      if (CV === 'drivers') renderDrivers();
-    })
-    .catch(function(e) { setSS('err', 'Erreur sync'); console.error(e); });
+    .catch(function(e) { setSS('err', 'Erreur sync'); console.error('pullData', e); });
+}
+// Bouton "Synchroniser" = pull manuel
+function syncNow() {
+  if (!CFG.dbUrl) { showView('settings'); return; }
+  pullData(false);
 }
 function forcePull() {
   if (!CFG.dbUrl) return;
@@ -371,14 +385,20 @@ function resetLocalData() {
   alert('Cache local vidé. Reconnectez Firebase et cliquez "Forcer import" pour récupérer vos données.');
 }
 
+// PUSH : envoie tout l'état local vers Firebase (après chaque modification locale)
 function pushData() {
   if (!CFG.dbUrl) return;
-  fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({reservations:RES, drivers:DRV, at:new Date().toISOString()})})
-    .then(function() { var t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); setSS('ok','OK '+t); })
-    .catch(function() { setSS('err','Erreur'); });
+  saveLocal(); saveClients(); saveServices();
+  setSS('syncing', 'Envoi...');
+  fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({reservations:RES, drivers:DRV, clients:CLI, services:SVC, at:new Date().toISOString()})})
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status);
+      var t = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); setSS('ok','OK '+t); })
+    .catch(function(e) { setSS('err','Erreur envoi'); console.error('pushData', e); });
 }
-setInterval(function() { if (CFG.dbUrl) syncNow(); }, 30000);
-if (CFG.dbUrl) { setSS('syncing','Sync...'); setTimeout(syncNow, 800); }
+// Synchro de fond : PULL uniquement, jamais de push automatique (évite l'écrasement)
+setInterval(function() { if (CFG.dbUrl) pullData(true); }, 15000);
+if (CFG.dbUrl) { setSS('syncing','Sync...'); setTimeout(function(){ pullData(false); }, 600); }
 
 // ── NAV ──
 var CV = 'list';
@@ -701,11 +721,6 @@ function renderSettings() {
       +'<button class="btn bb" style="font-size:13px;padding:8px 16px" onclick="syncNow()">&#x1F504; Synchroniser</button>'
       +'<button class="btn bg" style="font-size:13px;padding:8px 16px;color:#E67E22;border:1.5px solid #E67E22" onclick="forcePull()">&#x2B07; Forcer import</button>'
       +'<button class="btn bg" style="font-size:13px;padding:8px 16px" onclick="disconnectSync()">Déconnecter</button>'
-      +'</div>'
-      +'<div style="margin-top:12px;padding-top:12px;border-top:1px solid #EEF3F8">'
-      +'<button class="btn bg" style="font-size:12px;padding:7px 14px;color:var(--red);border:1.5px solid var(--red)" onclick="clearLocalData()">&#x1F5D1; Vider le cache local</button>'
-      +'<span style="font-size:11px;color:var(--muted);margin-left:10px">Si les données affichées sont obsolètes</span>'
-      +'<button class="btn bg" style="font-size:13px;padding:8px 16px;color:var(--red);border:1.5px solid var(--red)" onclick="clearLocalData()">&#x1F5D1; Vider cache local</button>'
       +'</div></div>'
     :'<div class="sbox2"><p style="font-size:13px;font-weight:700;color:#0E3460;margin-bottom:12px">🔥 Connexion Firebase (Google)</p>'
       +'<ol style="list-style:decimal;padding-left:18px;margin-bottom:14px;font-size:13px;line-height:2">'
@@ -727,7 +742,7 @@ function renderSettings() {
     +'<p style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px">&#9888; Zone de maintenance</p>'
     +'<p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Si vos données locales sont désynchronisées ou corrompues, vous pouvez les effacer et les recharger depuis Firebase.</p>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-    +'<button class="btn" style="background:#FEF0EF;color:var(--red);border:1.5px solid #F5C6C2;font-size:12px;padding:8px 14px" onclick="resetLocalData()">&#128465; Vider le cache local</button>'
+    +'<button class="btn" style="background:#FEF0EF;color:var(--red);border:1.5px solid #F5C6C2;font-size:12px;padding:8px 14px" onclick="clearLocalData()">&#128465; Vider le cache &amp; recharger</button>'
     +'<button class="btn" style="background:#FFF5E6;color:#7A4800;border:1.5px solid #FFD699;font-size:12px;padding:8px 14px" onclick="forcePull()">&#x2B07; Forcer import Firebase</button>'
     +'</div></div>'
     +'</div>';
@@ -743,49 +758,6 @@ function disconnectSync(){
   CFG={dbUrl:''};saveCfg();setSS('off','Non configuré');renderSettings();
 }
 
-function clearLocalData(){
-  if(!confirm('Vider toutes les données locales de cet appareil ?\nLes données Firebase ne seront pas supprimées.\nVous devrez reconnecter Firebase ensuite.'))return;
-  localStorage.clear();
-  RES=[]; DRV=[{id:'d1',name:'Lucnor LAROCHEL',vehicle:'Tesla Model Y',plate:'GK-580-RX',updatedAt:'0'}];
-  CLI=[]; 
-  SVC=[
-    {id:'s1',  name:'CDG \u2192 Paris \u2014 Berline',             category:'Transfert', price:'65',  updatedAt:'0'},
-    {id:'s2',  name:'CDG \u2192 Paris \u2014 Van',                 category:'Transfert', price:'120', updatedAt:'0'},
-    {id:'s3',  name:'Paris \u2192 CDG \u2014 Berline',             category:'Transfert', price:'60',  updatedAt:'0'},
-    {id:'s4',  name:'Paris \u2192 CDG \u2014 Van',                 category:'Transfert', price:'120', updatedAt:'0'},
-    {id:'s5',  name:'Orly \u2192 Paris \u2014 Berline',            category:'Transfert', price:'60',  updatedAt:'0'},
-    {id:'s6',  name:'Orly \u2192 Paris \u2014 Van',                category:'Transfert', price:'110', updatedAt:'0'},
-    {id:'s7',  name:'Paris \u2192 Orly \u2014 Berline',            category:'Transfert', price:'55',  updatedAt:'0'},
-    {id:'s8',  name:'Paris \u2192 Orly \u2014 Van',                category:'Transfert', price:'110', updatedAt:'0'},
-    {id:'s9',  name:'Gares Parisiennes \u2194 Paris \u2014 Berline',category:'Transfert', price:'40', updatedAt:'0'},
-    {id:'s10', name:'Gares Parisiennes \u2194 Paris \u2014 Van',    category:'Transfert', price:'80', updatedAt:'0'},
-    {id:'s11', name:'Paris \u2192 Disneyland \u2014 Berline',      category:'Transfert', price:'90',  updatedAt:'0'},
-    {id:'s12', name:'Paris \u2192 Disneyland \u2014 Van',          category:'Transfert', price:'150', updatedAt:'0'},
-    {id:'s13', name:'Disneyland \u2192 Paris \u2014 Berline',      category:'Transfert', price:'90',  updatedAt:'0'},
-    {id:'s14', name:'Disneyland \u2192 Paris \u2014 Van',          category:'Transfert', price:'150', updatedAt:'0'},
-    {id:'s15', name:'Paris \u2192 Versailles \u2014 Berline',      category:'Transfert', price:'55',  updatedAt:'0'},
-    {id:'s16', name:'Paris \u2192 Versailles \u2014 Van',          category:'Transfert', price:'140', updatedAt:'0'},
-    {id:'s17', name:'Versailles \u2192 Paris \u2014 Berline',      category:'Transfert', price:'55',  updatedAt:'0'},
-    {id:'s18', name:'Versailles \u2192 Paris \u2014 Van',          category:'Transfert', price:'140', updatedAt:'0'},
-    {id:'s19', name:'Connexion CDG \u2194 Orly \u2014 Berline',    category:'Transfert', price:'90',  updatedAt:'0'},
-    {id:'s20', name:'Connexion CDG \u2194 Orly \u2014 Van',        category:'Transfert', price:'160', updatedAt:'0'},
-    {id:'s21', name:'Mise \u00e0 disposition 1H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s22', name:'Mise \u00e0 disposition 1H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s23', name:'Mise \u00e0 disposition 2H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s24', name:'Mise \u00e0 disposition 2H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s25', name:'Mise \u00e0 disposition 3H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s26', name:'Mise \u00e0 disposition 3H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s27', name:'Mise \u00e0 disposition 4H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s28', name:'Mise \u00e0 disposition 4H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s29', name:'Mise \u00e0 disposition 5H \u2014 Berline',   category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s30', name:'Mise \u00e0 disposition 5H \u2014 Van',       category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s31', name:'Paris by Night 2H \u2014 Berline',             category:'Mise \u00e0 disposition', price:'', updatedAt:'0'},
-    {id:'s32', name:'Paris by Night 2H \u2014 Van',                 category:'Mise \u00e0 disposition', price:'', updatedAt:'0'}
-  ];
-  setSS('off','Non configuré');
-  renderSettings();
-  alert('Cache vidé. Reconnectez Firebase dans ⚙️ Sync puis cliquez "Forcer import".');
-}
 function clearLocalData(){
   if(!confirm('Effacer toutes les données locales et recharger depuis Firebase ?\nAttention : les modifications non synchronisées seront perdues.'))return;
   localStorage.removeItem('cren-res');
@@ -1086,45 +1058,7 @@ function saveServices() { localStorage.setItem('cren-svc',JSON.stringify(SVC)); 
 loadServices();
 migrateSvcNames();
 
-// Push clients & services with data sync
-var _origPushData = pushData;
-pushData = function() {
-  saveClients(); saveServices();
-  if (!CFG.dbUrl) return;
-  fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({reservations:RES, drivers:DRV, clients:CLI, services:SVC, at:new Date().toISOString()})
-  })
-  .then(function() { var t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); setSS('ok','OK '+t); })
-  .catch(function() { setSS('err','Erreur'); });
-};
-
-// Patch syncNow to also sync clients/services
-var _origSyncNow = syncNow;
-syncNow = function() {
-  if (!CFG.dbUrl) { showView('settings'); return; }
-  setSS('syncing', 'Sync...');
-  fetch(fbUrl())
-    .then(function(r) { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(function(remote) {
-      if (remote) {
-        function merge(a,b) { var m={}; (a||[]).concat(b||[]).forEach(function(x){if(!m[x.id]||(x.updatedAt||'')>(m[x.id].updatedAt||''))m[x.id]=x;}); return Object.values(m); }
-        RES = merge(RES, remote.reservations||[]);
-        DRV = merge(DRV, remote.drivers||[]);
-        CLI = merge(CLI, remote.clients||[]);
-        if (remote.services && remote.services.length) SVC = merge(SVC, remote.services);
-        saveLocal(); saveClients(); saveServices();
-      }
-      return fetch(fbUrl(), {method:'PUT', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({reservations:RES, drivers:DRV, clients:CLI, services:SVC, at:new Date().toISOString()})});
-    })
-    .then(function() {
-      var t=new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-      setSS('ok','OK '+t);
-      if(CV==='list')renderList(); if(CV==='drivers')renderDrivers();
-      if(CV==='clients')renderClients(); if(CV==='services')renderServices();
-    })
-    .catch(function(e){setSS('err','Erreur sync');console.error(e);});
-};
+// (Synchronisation gérée par pushData / pullData définis plus haut — clients & services inclus)
 
 // ── CLIENTS VIEW ──
 function renderClients() {
