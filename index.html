@@ -664,7 +664,7 @@ function renderVoucher(id,mode) {
 }
 
 // ── ACCUEIL ──
-var _wakeLock=null;
+var _wakeLock=null, _acName='';
 function acquireWake(){
   try{
     if('wakeLock' in navigator){
@@ -677,21 +677,15 @@ document.addEventListener('visibilitychange',function(){ if(document.visibilityS
 
 function openAccueil(id) {
   var r=RES.find(function(x){return x.id===id;}); if(!r) return;
-  var name=(r.passengerName||'Passager').toUpperCase().trim();
-  var el=document.getElementById('an');
-  var parts=(name.indexOf(',')!==-1?name.split(','):name.split(/\s+/)).map(function(p){return p.trim();}).filter(Boolean);
-  if(!parts.length) parts=[name];
-  el.innerHTML=parts.map(function(p){return '<div class="anl">'+E(p)+'</div>';}).join('');
+  _acName=(r.passengerName||'Passager').toUpperCase().trim();
   showView('accueil');
   acquireWake();
   requestAnimationFrame(fitName); setTimeout(fitName,80);
 }
-// Agrandit le nom au maximum pour remplir l'écran (recherche dichotomique mesurée)
-function fitName(){
-  var el=document.getElementById('an'), box=document.getElementById('aw');
-  if(!el||!box||CV!=='accueil') return;
+// Construit les lignes puis agrandit au maximum (recherche dichotomique mesurée)
+function _fitLines(el,box,lines){
+  el.innerHTML=lines.map(function(p){return '<div class="anl">'+E(p)+'</div>';}).join('');
   var maxW=box.clientWidth*0.92, maxH=box.clientHeight*0.86;
-  if(maxW<=0||maxH<=0) return;
   var lo=12, hi=Math.max(window.innerWidth,window.innerHeight)*1.2, best=lo;
   for(var i=0;i<24;i++){
     var mid=(lo+hi)/2;
@@ -699,6 +693,22 @@ function fitName(){
     if(el.scrollWidth<=maxW && el.scrollHeight<=maxH){ best=mid; lo=mid; } else { hi=mid; }
   }
   el.style.fontSize=Math.floor(best)+'px';
+}
+function fitName(){
+  var el=document.getElementById('an'), box=document.getElementById('aw');
+  if(!el||!box||CV!=='accueil'||!_acName||box.clientWidth<=0) return;
+  var commaParts=_acName.split(',').map(function(p){return p.trim();}).filter(Boolean);
+  var lines;
+  if(commaParts.length>1){
+    lines=commaParts;                                   // plusieurs voyageurs : un par ligne
+  } else {
+    var words=_acName.split(/\s+/).filter(Boolean);
+    var longest=0; words.forEach(function(w){ if(w.length>longest) longest=w.length; });
+    // une seule ligne si nom court ; deux lignes si un mot est long
+    var oneLine = words.length<2 || (longest<=7 && _acName.length<=15);
+    lines = oneLine ? [_acName] : words;
+  }
+  _fitLines(el,box,lines);
 }
 window.addEventListener('resize',function(){ if(CV==='accueil') fitName(); });
 window.addEventListener('orientationchange',function(){ setTimeout(function(){ if(CV==='accueil') fitName(); },300); });
