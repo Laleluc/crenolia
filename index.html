@@ -692,14 +692,28 @@ function parseRevenueLocal(text){
   }
 
   if(d.channel==='Uber'){
-    m=text.match(/total\s+des\s+revenus[^0-9€]{0,20}([0-9][0-9\s]*[.,]\d{2})\s*€/i);
-    if(!m)m=text.match(/vos\s+revenus[^0-9€]{0,20}([0-9][0-9\s]*[.,]\d{2})\s*€/i);
-    if(!m)m=text.match(/revenus?[^0-9€]{0,20}([0-9][0-9\s]*[.,]\d{2})\s*€/i);
+    // Montant : Total des revenus
+    m=text.match(/total\s+des\s+revenus[\s\S]{0,30}?([0-9][0-9\s]*[.,]\d{2})\s*€/i);
+    if(!m)m=text.match(/vos\s+revenus[\s\S]{0,30}?([0-9][0-9\s]*[.,]\d{2})\s*€/i);
+    if(!m)m=text.match(/total\s+des\s+revenus[^\n]*\n[^\n]*?([0-9][0-9\s]*[.,]\d{2})\s*€/i);
     if(m)d.amount=parseFloat(m[1].replace(/\s/g,'').replace(',','.'));
-    var ur=text.match(/\b(\d+)\s*\n?\s*[Cc]ourses?\b/)||text.match(/[Cc]ourses?\s*\n?\s*(\d+)\b/);
-    if(ur)d.rides=parseInt(ur[1],10);
-    var uk=text.match(/([0-9][\d\s]*)\s*\n?\s*[Kk]il[oé]m[eé]trage/i)||text.match(/[Kk]il[oé]m[eé]trage\s+total\s*\n?\s*([0-9][\d\s]*)/i)||text.match(/\b([0-9]{3,5})\s*\n?\s*[Kk]m\b/i);
-    if(uk){var rk=parseFloat(uk[1].replace(/\s/g,''));if(!isNaN(rk))d.km_total=Math.round(rk*1.8*10)/10;}
+
+    // Nombre de courses — le chiffre se trouve souvent seul sur sa ligne après "Courses"
+    // Formats possibles : "116\nCourses" ou "Courses\n116" ou "116 Courses"
+    var ur = text.match(/(\d{1,4})\s*\r?\n\s*[Cc]ourses?\b/)
+          || text.match(/\b[Cc]ourses?\s*\r?\n\s*(\d{1,4})\b/)
+          || text.match(/\b(\d{1,4})\s+[Cc]ourses?\b/)
+          || text.match(/[Cc]ourses?\s*[:\-]?\s*(\d{1,4})\b/);
+    if(ur) d.rides = parseInt(ur[1], 10);
+
+    // Kilométrage — "1659\nKilométrage total" ou "Kilométrage total\n1659"
+    var uk = text.match(/(\d{3,6})\s*\r?\n\s*[Kk]il[oé]m[eé]trage/i)
+          || text.match(/[Kk]il[oé]m[eé]trage\s+total\s*\r?\n\s*(\d{3,6})/i)
+          || text.match(/[Kk]il[oé]m[eé]trage[\s\S]{0,20}?(\d{3,6})/i)
+          || text.match(/(\d{3,6})\s*\r?\n\s*[Kk]m\b/i);
+    if(uk){ var rk=parseFloat(uk[1].replace(/\s/g,'')); if(!isNaN(rk))d.km_total=Math.round(rk*1.8*10)/10; }
+
+    // Date : "01-30 Avril 2026" → 2026-04-01
     var fd=text.match(/(\d{1,2})[-–]\d{1,2}\s+([A-Za-zéûôàùèê]{3,9})\s+(20\d{2})/i);
     if(fd&&moisFR[(fd[2]||'').toLowerCase()]){var mm=moisFR[fd[2].toLowerCase()];d.date=fd[3]+'-'+(mm<10?'0'+mm:mm)+'-01';}
     return d;
