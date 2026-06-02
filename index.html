@@ -613,10 +613,10 @@ function renderDashboard(){
     h+='<button class="dk-btn-add" style="font-size:11px;padding:7px 13px;background:linear-gradient(135deg,#4A148C,#AB47BC)" onclick="importRevenuePDF()">📄 PDF</button>';
     h+='<button class="dk-btn" style="font-size:11px;padding:7px 13px;border-color:#E67E22;color:#E67E22" onclick="diagRevenuePDF()">🔍 Diag PDF</button></div>';
     // KPI banner
-    h+='<div style="background:linear-gradient(135deg,rgba(21,101,192,.4),rgba(106,27,154,.4));border:1px solid rgba(79,195,247,.2);border-radius:14px;padding:20px 24px;margin-bottom:14px">';
-    h+='<div style="font-size:10px;letter-spacing:1.2px;color:#7B9CCC;text-transform:uppercase;margin-bottom:4px">'+periodLabel()+' · CA brut</div>';
-    h+='<div style="font-size:38px;font-weight:800;color:#4FC3F7;text-shadow:0 0 20px rgba(79,195,247,.5)">'+eur(caTotal)+'</div>';
-    h+='<div style="font-size:11px;color:#4A6080;margin-top:4px">'+revRows.length+' entrée'+(revRows.length>1?'s':'')+'</div></div>';
+    h+='<div style="background:var(--blue);border-radius:14px;padding:20px 24px;margin-bottom:14px">';
+    h+='<div style="font-size:10px;letter-spacing:1.2px;color:rgba(255,255,255,.75);text-transform:uppercase;margin-bottom:4px">'+periodLabel()+' · CA brut</div>';
+    h+='<div style="font-size:38px;font-weight:800;color:#fff">'+eur(caTotal)+'</div>';
+    h+='<div style="font-size:11px;color:rgba(255,255,255,.65);margin-top:4px">'+revRows.length+' entrée'+(revRows.length>1?'s':'')+'</div></div>';
     h+='<div class="dsh-grid2">';
     // Barres canaux
     h+='<div class="dk"><div class="dk-title">Répartition par canal</div><div class="dk-sub">'+periodLabel()+'</div>';
