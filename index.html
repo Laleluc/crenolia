@@ -611,7 +611,7 @@ function renderDashboard(){
     if(DASH_YEAR!=='all'){h+='<select onchange="DASH_PERIOD=this.value;renderDashboard()" style="padding:7px 11px;border:1px solid rgba(255,255,255,.12);border-radius:8px;font-family:inherit;font-size:12px;background:#0D1235;color:#C0D0E8"><option value="year"'+(DASH_PERIOD==='year'?' selected':'')+'>Exercice complet</option><optgroup label="Trimestres"><option value="q1"'+(DASH_PERIOD==='q1'?' selected':'')+'>T1 — Avr/Mai/Juin</option><option value="q2"'+(DASH_PERIOD==='q2'?' selected':'')+'>T2 — Juil/Aoû/Sep</option><option value="q3"'+(DASH_PERIOD==='q3'?' selected':'')+'>T3 — Oct/Nov/Déc</option><option value="q4"'+(DASH_PERIOD==='q4'?' selected':'')+'>T4 — Jan/Fév/Mar</option></optgroup><optgroup label="Mois">'+buildMonthOptions(DASH_YEAR)+'</optgroup></select>';}
     h+='<button class="dk-btn-add" style="font-size:11px;padding:7px 13px" onclick="openRevModal(null)">+ Ajouter</button>';
     h+='<button class="dk-btn-add" style="font-size:11px;padding:7px 13px;background:linear-gradient(135deg,#4A148C,#AB47BC)" onclick="importRevenuePDF()">📄 PDF</button>';
-    h+='<button class="dk-btn" style="font-size:11px;padding:7px 13px" onclick="openChanModal()">⚙️ Canaux</button></div>';
+    h+='<button class="dk-btn" style="font-size:11px;padding:7px 13px;border-color:#E67E22;color:#E67E22" onclick="diagRevenuePDF()">🔍 Diag PDF</button></div>';
     // KPI banner
     h+='<div style="background:linear-gradient(135deg,rgba(21,101,192,.4),rgba(106,27,154,.4));border:1px solid rgba(79,195,247,.2);border-radius:14px;padding:20px 24px;margin-bottom:14px">';
     h+='<div style="font-size:10px;letter-spacing:1.2px;color:#7B9CCC;text-transform:uppercase;margin-bottom:4px">'+periodLabel()+' · CA brut</div>';
@@ -663,6 +663,49 @@ function removeChannel(i){if(!confirm('Supprimer "'+CHAN[i]+'" ?'))return;CHAN.s
 // PDF
 function loadPdfJs(){return new Promise(function(resolve,reject){var lib=window.pdfjsLib||window['pdfjs-dist/build/pdf'];if(lib){resolve(lib);return;}var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=function(){var l=window.pdfjsLib||window['pdfjs-dist/build/pdf'];if(l){try{l.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}catch(e){}resolve(l);}else reject(new Error('pdfjs introuvable'));};s.onerror=function(){reject(new Error('Chargement de pdf.js échoué'));};document.head.appendChild(s);});}
 function importRevenuePDF(){var inp=document.createElement('input');inp.type='file';inp.accept='application/pdf,.pdf';inp.onchange=function(){var f=inp.files&&inp.files[0];if(f)handleRevenuePDF(f);};inp.click();}
+function diagRevenuePDF(){
+  var inp=document.createElement('input');inp.type='file';inp.accept='application/pdf,.pdf';
+  inp.onchange=function(){
+    var f=inp.files&&inp.files[0];if(!f)return;
+    var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1200';
+    ov.innerHTML='<div style="background:#0D1235;padding:20px 28px;border-radius:12px;border:1px solid rgba(79,195,247,.2);color:#fff"><span class="spinner"></span> Lecture...</div>';
+    document.body.appendChild(ov);
+    loadPdfJs().then(function(lib){
+      var reader=new FileReader();
+      reader.onload=function(){
+        var data=new Uint8Array(reader.result);
+        lib.getDocument({data:data}).promise.then(function(pdf){
+          var pages=[];for(var p2=1;p2<=pdf.numPages;p2++)pages.push(p2);
+          return pages.reduce(function(chain,p2){return chain.then(function(acc){return pdf.getPage(p2).then(function(pg){return pg.getTextContent();}).then(function(tc){return acc+tc.items.map(function(it){return it.str;}).join(' ')+'\n';});});},Promise.resolve(''));
+        }).then(function(text){
+          ov.remove();
+          // Résultat du diagnostic
+          var local=parseRevenueLocal(text);
+          var preview=text.slice(0,1500).replace(/</g,'&lt;');
+          var diag=document.createElement('div');
+          diag.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1300;display:flex;align-items:center;justify-content:center;padding:16px';
+          diag.innerHTML='<div style="background:#fff;border-radius:14px;padding:20px;max-width:680px;width:100%;max-height:90vh;overflow:auto">'
+            +'<h3 style="color:#0E3460;margin-bottom:12px">🔍 Diagnostic PDF Uber</h3>'
+            +'<div style="background:#EBF7E3;border:1.5px solid #A8D5A2;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px">'
+            +'<strong>Résultat parser local :</strong><br>'
+            +'💶 Montant : <strong>'+(local.amount||'❌ NON TROUVÉ')+'</strong><br>'
+            +'🚗 Courses : <strong>'+(local.rides||'❌ NON TROUVÉ')+'</strong><br>'
+            +'📍 Km (×1.8) : <strong>'+(local.km_total||'❌ NON TROUVÉ')+'</strong><br>'
+            +'📅 Date : <strong>'+(local.date||'❌ NON TROUVÉ')+'</strong>'
+            +'</div>'
+            +'<div style="font-size:11px;color:#555;margin-bottom:8px"><strong>Texte brut extrait (1500 premiers caractères) :</strong></div>'
+            +'<pre style="background:#F3F7FC;border:1px solid #D5E8F7;border-radius:8px;padding:12px;font-size:10px;white-space:pre-wrap;max-height:300px;overflow:auto">'+preview+'</pre>'
+            +'<button onclick="this.closest(\'div[style*=fixed]\').remove()" style="margin-top:12px;padding:9px 20px;background:#0066CC;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px">Fermer</button>'
+            +'</div>';
+          diag.addEventListener('click',function(e){if(e.target===diag)diag.remove();});
+          document.body.appendChild(diag);
+        }).catch(function(e){ov.remove();alert('Erreur lecture : '+e.message);});
+      };
+      reader.readAsArrayBuffer(f);
+    }).catch(function(e){ov.remove();alert(e.message);});
+  };
+  inp.click();
+}
 function handleRevenuePDF(file){var ov=document.createElement('div');ov.id='pdf-busy';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1200;color:#fff';ov.innerHTML='<div style="background:#0D1235;padding:20px 28px;border-radius:12px;border:1px solid rgba(79,195,247,.2)"><span class="spinner"></span> Lecture du PDF...</div>';document.body.appendChild(ov);loadPdfJs().then(function(lib){var reader=new FileReader();reader.onload=function(){var data=new Uint8Array(reader.result);lib.getDocument({data:data}).promise.then(function(pdf){var pages=[];for(var p=1;p<=pdf.numPages;p++)pages.push(p);return pages.reduce(function(chain,p){return chain.then(function(acc){return pdf.getPage(p).then(function(pg){return pg.getTextContent();}).then(function(tc){return acc+tc.items.map(function(it){return it.str;}).join(' ')+'\n';});});},Promise.resolve(''));}).then(function(text){ov.remove();analyzeRevenueText(text);}).catch(function(e){ov.remove();alert('Lecture impossible : '+e.message);});};reader.onerror=function(){ov.remove();alert('Fichier illisible.');};reader.readAsArrayBuffer(file);}).catch(function(e){ov.remove();alert(e.message);});}
 function analyzeRevenueText(text){var local=parseRevenueLocal(text);if(local&&local.amount){openRevModalPrefilled(local,'pdf');return;}var ov=document.createElement('div');ov.id='pdf-busy';ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:1200;color:#fff';ov.innerHTML='<div style="background:#0D1235;padding:20px 28px;border-radius:12px;border:1px solid rgba(79,195,247,.2)"><span class="spinner"></span> Analyse IA...</div>';document.body.appendChild(ov);fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:text.slice(0,12000),mode:'revenue'})}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(res){ov.remove();var ai=null;try{ai=JSON.parse(String(res.raw||'').replace(/```json/g,'').replace(/```/g,'').trim());}catch(e){}if(ai&&ai.amount){openRevModalPrefilled({amount:ai.amount,date:ai.date||'',channel:ai.channel||''},'pdf');}else if(local){openRevModalPrefilled(local,'pdf');}else{alert('Montant introuvable. Saisie manuelle.');openRevModal(null);}}).catch(function(e){ov.remove();if(local){openRevModalPrefilled(local,'pdf');}else{alert('IA indisponible.');openRevModal(null);}});}
 function parseRevenueLocal(text){
