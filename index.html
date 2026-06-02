@@ -514,6 +514,9 @@ function renderDashboard(){
   var siteCrenRides=REV.filter(function(r){return(DASH_YEAR==='all'||inFY(r.date,DASH_YEAR))&&/cr[ée]nolia|site/i.test(r.channel||'');}).reduce(function(s,r){return s+(+r.rides||0);},0);
   totalKm+=siteCrenRides*35;
   var avgPrice=totalRides>0?Math.round(fyTotal/totalRides*100)/100:0;
+  var avgPerKm=totalKm>0?Math.round(fyTotal/totalKm*100)/100:0;
+  var curYM=now.toISOString().slice(0,7);
+  var ridesCurMonth=REV.filter(function(r){return r.date&&r.date.slice(0,7)===curYM;}).reduce(function(s,r){return s+(+r.rides||0);},0);
 
   var h='<div class="dsh"><div class="dsh-glow"></div>';
   var tabs=[{k:'overview',lbl:'🏠 Vue d\'ensemble'},{k:'planning',lbl:'📅 Planning'},{k:'finances',lbl:'💶 CA & Finances'},{k:'rides',lbl:'🚗 Courses'}];
@@ -529,11 +532,12 @@ function renderDashboard(){
   h+='</div></div>';
   h+='<div class="dsh-kpis">';
   h+='<div><div class="dsh-kpi-big">'+eur(fyTotal).replace(' €','')+'<span style="font-size:14px;font-weight:400;color:var(--muted)"> €</span></div><div class="dsh-kpi-lbl">CA brut exercice <span class="kpi-up">↑ Actif</span></div></div>';
-  h+='<div><div class="dsh-kpi-sm">'+ridesThisMonth.length+'</div><div class="dsh-kpi-lbl">Courses '+mLabel+'</div></div>';
+  h+='<div><div class="dsh-kpi-sm">'+ridesCurMonth+'</div><div class="dsh-kpi-lbl">Courses '+mLabel+'</div></div>';
   if(totalRides>0){
-    h+='<div><div style="font-size:18px;font-weight:800;color:#E67E22">'+totalRides+'</div><div class="dsh-kpi-lbl">Courses (PDF)</div></div>';
+    h+='<div><div style="font-size:18px;font-weight:800;color:#E67E22">'+totalRides+'</div><div class="dsh-kpi-lbl">Courses exercice</div></div>';
     h+='<div><div style="font-size:18px;font-weight:800;color:#27AE60">'+eur(avgPrice)+'</div><div class="dsh-kpi-lbl">Prix moy./course</div></div>';
     if(totalKm>0)h+='<div><div style="font-size:18px;font-weight:800;color:var(--blue)">'+Math.round(totalKm)+'</div><div class="dsh-kpi-lbl">km (à vide incl.)</div></div>';
+    if(totalKm>0)h+='<div><div style="font-size:18px;font-weight:800;color:#16A085">'+eur(avgPerKm)+'/km</div><div class="dsh-kpi-lbl">Prix moy./km</div></div>';
   }
   h+='<div><div style="font-size:16px;font-weight:800;color:#27AE60">'+upcoming.length+'</div><div class="dsh-kpi-lbl">Transferts à venir</div></div>';
   h+='</div></div>';
@@ -582,10 +586,10 @@ function renderDashboard(){
     upcoming.slice(0,4).forEach(function(r){var ds=r.pickupDate?new Date(r.pickupDate).toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'}):'—';var isSub=r.isSubcontracted&&r.subcontractorName;h+='<div class="pl-item"><div class="pl-icon">'+(isSub?'🔄':'✈️')+'</div><div class="pl-info"><div class="pl-name">'+E(r.passengerName||'—')+'</div><div class="pl-route">'+E(r.pickupLocation||'')+(r.destination?' → '+r.destination:'')+'</div></div><div style="text-align:right"><div class="pl-time" style="color:#4FC3F7">'+(r.pickupTime||'—')+'</div><div class="pl-date">'+ds+'</div></div></div>';});
     h+='<div style="margin-top:10px;text-align:right"><button class="dk-btn" onclick="DASH_TAB=\'planning\';renderDashboard()">Voir tout →</button></div></div>';
     // Barres mensuelles
-    h+='<div class="dk"><div class="dk-title">📊 Courses / mois</div><div class="dk-sub">'+mLabel+'</div>';
-    // Calcule courses par mois de l'exercice
+    h+='<div class="dk"><div class="dk-title">📊 Courses / mois</div><div class="dk-sub">Exercice '+DASH_YEAR+'</div>';
+    // Courses par mois de l'exercice, à partir des entrées CA (champ "courses")
     var coursesByM=[0,0,0,0,0,0,0,0,0,0,0,0];
-    if(DASH_YEAR!=='all'){var p2=parseFY(DASH_YEAR);RES.forEach(function(r){if(!r.pickupDate)return;var d=new Date(r.pickupDate),yr=d.getFullYear(),m=d.getMonth();for(var i=0;i<12;i++){if(FY_MONTHS[i]===m&&yr===(i<=8?p2[0]:p2[1])){coursesByM[i]++;break;}}});}
+    if(DASH_YEAR!=='all'){var p2=parseFY(DASH_YEAR);REV.forEach(function(r){if(!r.date||!r.rides)return;var d=new Date(r.date),yr=d.getFullYear(),m=d.getMonth();for(var i=0;i<12;i++){if(FY_MONTHS[i]===m&&yr===(i<=8?p2[0]:p2[1])){coursesByM[i]+=(+r.rides||0);break;}}});}
     var maxC=coursesByM.reduce(function(a,v){return Math.max(a,v);},0)||1;
     h+='<div class="bars-wrap">';
     for(var bi=0;bi<12;bi++){var bh=Math.round(coursesByM[bi]/maxC*85);var bcol=isActiveMonth(bi)?'linear-gradient(to top,#1565C0,#4FC3F7)':'rgba(255,255,255,.07)';h+='<div class="bar-col"><div class="dbar" style="height:'+bh+'px;background:'+bcol+'" title="'+FY_LABELS[bi]+' : '+coursesByM[bi]+' courses"></div><div class="bar-lbl">'+FY_LABELS[bi]+'</div></div>';}
