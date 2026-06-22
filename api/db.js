@@ -57,6 +57,15 @@ async function getAccessToken(sa) {
 }
 
 export default async function handler(req, res) {
+  // Contrôle d'accès : si APP_SECRET est défini, on exige l'en-tête X-App-Secret.
+  const APP_SECRET = process.env.APP_SECRET;
+  if (APP_SECRET) {
+    const provided = String(req.headers['x-app-secret'] || '');
+    const a = Buffer.from(provided), b = Buffer.from(APP_SECRET);
+    const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+    if (!ok) return res.status(401).json({ error: 'Non autorisé' });
+  }
+
   const saRaw = process.env.FIREBASE_SERVICE_ACCOUNT;
   if (!saRaw) {
     return res.status(500).json({ error: 'FIREBASE_SERVICE_ACCOUNT non configurée sur Vercel' });
